@@ -2,9 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flutter Build & Install",
+      "name": "Flutter Build & Install Android",
       "request": "launch",
       "type": "dart",
+      "cwd": "${workspaceFolder}/apps/app",
       "program": "lib/main.dart",
       "deviceId": "5200d78bfa479449"
     },
@@ -12,6 +13,7 @@
       "name": "Flutter on Windows",
       "request": "launch",
       "type": "dart",
+      "cwd": "${workspaceFolder}/apps/app",
       "program": "lib/main.dart",
       "deviceId": "windows"
     }
