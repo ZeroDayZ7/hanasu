@@ -41,7 +41,7 @@ func main() {
 		zap.String("provider", cfg.TranslationProvider),
 	)
 
-	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
+	if err := http.ListenAndServe("0.0.0.0:"+cfg.Port, nil); err != nil {
 		logger.Fatal("Failed to start server", zap.Error(err))
 	}
 }

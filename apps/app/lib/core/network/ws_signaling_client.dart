@@ -42,7 +42,10 @@ final class WsSignalingClient implements SignalingClient {
     _stateController.add(SignalingState.connecting);
 
     try {
-      final uri = Uri.parse('${EnvConfig.current.wsBaseUrl}?room=$roomId');
+      final urlString = '${EnvConfig.current.wsBaseUrl}?room=$roomId';
+      _logger.i('Full WebSocket URI: $urlString', module: 'WsSignaling');
+
+      final uri = Uri.parse(urlString);
       _channel = WebSocketChannel.connect(uri);
 
       // Oczekiwanie na gotowość gniazda
