@@ -13,16 +13,14 @@ type TranslationResponse struct {
 	Provider       string `json:"provider"`
 }
 
-// Interfejs silnika tłumaczeń
 type Translator interface {
 	Translate(ctx context.Context, req TranslationRequest) (*TranslationResponse, error)
 	StreamTranslate(ctx context.Context, req TranslationRequest, ch chan<- string) error
 }
 
-// Typy komunikatów protokołu P2P / Signaling przez WebSocket
 type WSMessage struct {
-	Type    string      `json:"type"`    // "offer", "answer", "candidate", "translate", "audio_chunk"
-	Sender  string      `json:"sender"`  // ID / Alias nadawcy
-	Target  string      `json:"target"`  // ID odbiorcy w P2P
-	Payload interface{} `json:"payload"` // Treść pakietu
+	Type    string `json:"type"`
+	Sender  string `json:"sender"`
+	Target  string `json:"target"`
+	Payload any    `json:"payload"`
 }

@@ -46,7 +46,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     _eventSub = signaling.eventStream.listen((event) {
       if (!mounted) return;
 
-      final l10n = AppLocalizations.of(context)!;
+      final l10n = AppLocalizations.of(context);
+      if (l10n == null) return;
 
       if (event is PeerJoinedEvent) {
         setState(() {
@@ -54,7 +55,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           _messages.add(
             ChatMessage(
               id: DateTime.now().toIso8601String(),
-              text: l10n.peerJoined(_peerId!),
+              text: l10n.peerJoined(event.peerId),
               source: MessageSource.system,
               timestamp: DateTime.now(),
             ),
@@ -86,38 +87,35 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   }
 
   Future<void> _onLeave() async {
+    final signaling = ref.read(signalingClientProvider);
+    await signaling.disconnect();
     await clearActiveRoomId();
+
     if (mounted) {
       Navigator.of(context).pop();
     }
   }
 
   String _getStatusText(AppLocalizations l10n) {
-    switch (_currentState) {
-      case SignalingState.disconnected:
-        return l10n.statusDisconnected;
-      case SignalingState.connecting:
-        return l10n.statusConnecting;
-      case SignalingState.connected:
-        return _peerId != null
+    return switch (_currentState) {
+      SignalingState.disconnected => l10n.statusDisconnected,
+      SignalingState.connecting => l10n.statusConnecting,
+      SignalingState.connected =>
+        _peerId != null
             ? l10n.statusConnectedWithPeer(_peerId!)
-            : l10n.statusWaitingForPeer;
-      case SignalingState.error:
-        return l10n.statusError;
-    }
+            : l10n.statusWaitingForPeer,
+      SignalingState.error => l10n.statusError,
+    };
   }
 
   Color _getStatusColor() {
-    switch (_currentState) {
-      case SignalingState.disconnected:
-        return Colors.grey;
-      case SignalingState.connecting:
-        return Colors.orangeAccent;
-      case SignalingState.connected:
-        return _peerId != null ? Colors.greenAccent : Colors.lightBlueAccent;
-      case SignalingState.error:
-        return Colors.redAccent;
-    }
+    return switch (_currentState) {
+      SignalingState.disconnected => Colors.grey,
+      SignalingState.connecting => Colors.orangeAccent,
+      SignalingState.connected =>
+        _peerId != null ? Colors.greenAccent : Colors.lightBlueAccent,
+      SignalingState.error => Colors.redAccent,
+    };
   }
 
   @override
@@ -141,11 +139,30 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             color: const Color(0xFF1E293B),
             child: Row(
               children: [
-                Icon(Icons.circle, size: 12, color: _getStatusColor()),
-                const SizedBox(width: 8),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _getStatusColor(),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _getStatusColor().withValues(alpha: 0.6),
+                        blurRadius: 6,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   _getStatusText(l10n),
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
+                  ),
                 ),
               ],
             ),

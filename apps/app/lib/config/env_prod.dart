@@ -9,4 +9,7 @@ class ProdConfig implements EnvConfig {
 
   @override
   bool get enableLogging => false;
+
+  @override
+  bool get useMockSignaling => false;
 }

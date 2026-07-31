@@ -2,7 +2,6 @@ import 'package:app/config/env_config.dart';
 
 class DevConfig implements EnvConfig {
   @override
-  // Na Android Emulatorze: 10.0.2.2. Na Windows/Tailscale: Twój IP w Tailscale (np. 100.x.y.z)
   String get apiBaseUrl => 'http://10.0.2.2:8080';
 
   @override
@@ -10,4 +9,7 @@ class DevConfig implements EnvConfig {
 
   @override
   bool get enableLogging => true;
+
+  @override
+  bool get useMockSignaling => true; // Lub false, w zależności od potrzeb deweloperskich
 }

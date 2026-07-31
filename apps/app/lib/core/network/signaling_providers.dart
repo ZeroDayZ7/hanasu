@@ -1,20 +1,25 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:app/config/env_config.dart';
+import 'package:app/core/logger/logger_provider.dart';
 import 'package:app/core/network/mock_signaling_client.dart';
 import 'package:app/core/network/signaling_client.dart';
 import 'package:app/core/network/ws_signaling_client.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-const bool useMockSignaling = true;
+part 'signaling_providers.g.dart';
 
-SignalingClient createSignalingClient() {
-  if (useMockSignaling) {
-    return MockSignalingClient();
-  }
-  return WsSignalingClient();
-}
+@Riverpod(keepAlive: true)
+SignalingClient signalingClient(Ref ref) {
+  final logger = ref.watch(appLoggerProvider);
+  final isMock = EnvConfig.current.useMockSignaling;
 
-final signalingClientProvider = Provider<SignalingClient>((ref) {
-  final client = createSignalingClient();
-  ref.onDispose(() => client.disconnect());
+  final client = isMock
+      ? MockSignalingClient(logger)
+      : WsSignalingClient(logger);
+
+  ref.onDispose(() {
+    logger.d('Disposing SignalingClient instance', module: 'Signaling');
+    client.disconnect();
+  });
+
   return client;
-});
+}

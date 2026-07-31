@@ -12,7 +12,7 @@
     "**/linux": true,
     "**/macos": true,
     "**/web": true,
-    "**/windows": true,
+    // "**/windows": true,
     "**/test": true,
     "**/.gitattributes": true,
     "**/pubspec.lock": true,
