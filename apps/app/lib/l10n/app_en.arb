@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+  "appTitle": "HANASU :: P2P VOICE",
+  "roomInputHint": "e.g. xyz15",
+  "roomInputSubtitle": "Enter room code or generate a new one",
+  "connectButton": "CONNECT",
+  "createRoomButton": "CREATE ROOM",
+  "copyCodeTooltip": "Copy code",
+  "codeCopiedSnackBar": "Room code copied to clipboard: {pin}",
+  "connectingToRoom": "Connecting to room {pin}...",
+  "@codeCopiedSnackBar": {
+    "placeholders": {
+      "pin": { "type": "String" }
+    }
+  },
+  "@connectingToRoom": {
+    "placeholders": {
+      "pin": { "type": "String" }
+    }
+  }
+}

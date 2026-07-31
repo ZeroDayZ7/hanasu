@@ -13,3 +13,4 @@ bin/
 dist/
 node_modules/
 *.exe
+combined.txt
