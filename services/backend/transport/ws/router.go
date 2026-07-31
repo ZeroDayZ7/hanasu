@@ -44,6 +44,8 @@ func ServeWS(logger *zap.Logger, hub *Hub, t domain.Translator, w http.ResponseW
 	go handleConnection(r.Context(), logger, hub, t, client)
 }
 
+// services/backend/transport/ws/router.go
+
 func handleConnection(ctx context.Context, logger *zap.Logger, hub *Hub, t domain.Translator, client *Client) {
 	defer func() {
 		logger.Info("Client disconnected", zap.String("remote_addr", client.ID), zap.String("room_id", client.RoomID))
@@ -65,6 +67,11 @@ func handleConnection(ctx context.Context, logger *zap.Logger, hub *Hub, t domai
 			continue
 		}
 
+		// KLUCZOWY KROK: Jeżeli klient nie przesłał pola Sender, wymuszamy przypisanie ID klienta
+		if wsMsg.Sender == "" {
+			wsMsg.Sender = client.ID
+		}
+
 		logger.Debug("Received WS message",
 			zap.String("type", wsMsg.Type),
 			zap.String("sender", wsMsg.Sender),
@@ -78,10 +85,18 @@ func handleConnection(ctx context.Context, logger *zap.Logger, hub *Hub, t domai
 				zap.String("sender", wsMsg.Sender),
 				zap.String("room_id", client.RoomID),
 			)
+
+			// Kodujemy wiadomość ponownie do JSON z uzupełnionym polem Sender
+			payload, err := json.Marshal(wsMsg)
+			if err != nil {
+				logger.Error("Failed to marshal WebRTC message", zap.Error(err))
+				continue
+			}
+
 			hub.broadcast <- MessageEnvelope{
 				RoomID: client.RoomID,
 				Sender: client,
-				Data:   message,
+				Data:   payload,
 			}
 
 		case "translate":
@@ -123,10 +138,17 @@ func handleConnection(ctx context.Context, logger *zap.Logger, hub *Hub, t domai
 
 		default:
 			logger.Debug("Handling default WS message type", zap.String("type", wsMsg.Type))
+
+			payload, err := json.Marshal(wsMsg)
+			if err != nil {
+				logger.Error("Failed to marshal default message", zap.Error(err))
+				continue
+			}
+
 			hub.broadcast <- MessageEnvelope{
 				RoomID: client.RoomID,
 				Sender: client,
-				Data:   message,
+				Data:   payload,
 			}
 		}
 	}

@@ -1,4 +1,3 @@
-// apps/app/lib/features/session/presentation/session_screen.dart
 import 'dart:async';
 
 import 'package:app/core/audio/audio_providers.dart';
@@ -20,7 +19,8 @@ class SessionScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
-  bool _isTalking = false;
+  // Mikrofon włączony domyślnie po wejściu do pokoju
+  bool _isMicEnabled = true;
   SignalingState _currentState = SignalingState.disconnected;
   String? _peerId;
 
@@ -89,14 +89,12 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     super.dispose();
   }
 
-  void _onTalkStart() {
-    setState(() => _isTalking = true);
-    ref.read(webRtcServiceProvider).setMicrophoneMuted(false);
-  }
-
-  void _onTalkEnd() {
-    setState(() => _isTalking = false);
-    ref.read(webRtcServiceProvider).setMicrophoneMuted(true);
+  void _toggleMicrophone() {
+    setState(() {
+      _isMicEnabled = !_isMicEnabled;
+    });
+    // Ustawiamy stan wyciszenia w WebRTC (dla włączonego mikrofonu, muted = false)
+    ref.read(webRtcServiceProvider).setMicrophoneMuted(!_isMicEnabled);
   }
 
   Future<void> _onLeave() async {
@@ -148,6 +146,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       ),
       body: Column(
         children: [
+          // Pasek stanu połączenia
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             color: const Color(0xFF1E293B),
@@ -181,6 +180,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               ],
             ),
           ),
+          // Lista wiadomości
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -254,39 +254,58 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               },
             ),
           ),
+          // Sekcja z przyciskiem ON/OFF mikrofonu
           Padding(
             padding: const EdgeInsets.only(bottom: 32, top: 16),
-            child: GestureDetector(
-              onTapDown: (_) => _onTalkStart(),
-              onTapUp: (_) => _onTalkEnd(),
-              onTapCancel: () => _onTalkEnd(),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                height: 100,
-                width: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _isTalking
-                      ? const Color(0xFFEF4444)
-                      : const Color(0xFF6366F1),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          (_isTalking
-                                  ? Colors.redAccent
-                                  : const Color(0xFF6366F1))
-                              .withValues(alpha: 0.5),
-                      blurRadius: _isTalking ? 30 : 10,
-                      spreadRadius: _isTalking ? 10 : 2,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: _toggleMicrophone,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: 80,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isMicEnabled
+                          ? const Color(
+                              0xFF10B981,
+                            ) // Zielony -> Mikrofon Włączony
+                          : const Color(
+                              0xFFEF4444,
+                            ), // Czerwony -> Mikrofon Wyciszony
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              (_isMicEnabled
+                                      ? const Color(0xFF10B981)
+                                      : const Color(0xFFEF4444))
+                                  .withValues(alpha: 0.4),
+                          blurRadius: _isMicEnabled ? 20 : 8,
+                          spreadRadius: _isMicEnabled ? 4 : 1,
+                        ),
+                      ],
                     ),
-                  ],
+                    child: Icon(
+                      _isMicEnabled ? Icons.mic : Icons.mic_off,
+                      size: 38,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  _isTalking ? Icons.mic : Icons.mic_none,
-                  size: 48,
-                  color: Colors.white,
+                const SizedBox(height: 12),
+                Text(
+                  _isMicEnabled ? 'Mikrofon: WŁĄCZONY' : 'Mikrofon: WYCISZONY',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: _isMicEnabled
+                        ? const Color(0xFF34D399)
+                        : const Color(0xFFF87171),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],

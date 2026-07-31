@@ -2,10 +2,10 @@ import 'package:app/config/env_config.dart';
 
 class DevConfig implements EnvConfig {
   @override
-  String get apiBaseUrl => 'http://192.168.42.76:8080';
+  String get apiBaseUrl => 'http://100.88.179.37:8080';
 
   @override
-  String get wsBaseUrl => 'ws://192.168.42.76:8080/ws';
+  String get wsBaseUrl => 'ws://100.88.179.37:8080/ws';
 
   @override
   bool get enableLogging => true;

@@ -246,13 +246,21 @@ final class WsSignalingClient implements SignalingClient {
   @override
   void sendOffer(String targetId, String sdp) {
     _logger.d('Sending offer to -> $targetId', module: 'WsSignaling');
-    _send({'type': 'offer', 'target_id': targetId, 'sdp': sdp});
+    _send({
+      'type': 'offer',
+      'target_id': targetId,
+      'payload': {'sdp': sdp},
+    });
   }
 
   @override
   void sendAnswer(String targetId, String sdp) {
     _logger.d('Sending answer to -> $targetId', module: 'WsSignaling');
-    _send({'type': 'answer', 'target_id': targetId, 'sdp': sdp});
+    _send({
+      'type': 'answer',
+      'target_id': targetId,
+      'payload': {'sdp': sdp},
+    });
   }
 
   @override
@@ -266,9 +274,11 @@ final class WsSignalingClient implements SignalingClient {
     _send({
       'type': 'candidate',
       'target_id': targetId,
-      'candidate': candidate,
-      'sdpMid': sdpMid,
-      'sdpMLineIndex': sdpMLineIndex,
+      'payload': {
+        'candidate': candidate,
+        'sdpMid': sdpMid,
+        'sdpMLineIndex': sdpMLineIndex,
+      },
     });
   }
 
