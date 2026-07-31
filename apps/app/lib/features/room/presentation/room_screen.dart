@@ -1,6 +1,8 @@
 import 'package:app/core/locale/language_selector_widget.dart';
-import 'package:app/features/room/domain/room_code_generator.dart';
-import 'package:app/features/session/data/session_storage.dart';
+import 'package:app/features/room/presentation/widgets/room_action_buttons.dart';
+import 'package:app/features/room/presentation/widgets/room_header_icon.dart';
+import 'package:app/features/room/presentation/widgets/room_input_field.dart';
+import 'package:app/features/room/providers/room_controller.dart';
 import 'package:app/features/session/presentation/session_screen.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -16,27 +18,6 @@ class RoomScreen extends ConsumerStatefulWidget {
 
 class _RoomScreenState extends ConsumerState<RoomScreen> {
   final TextEditingController _pinController = TextEditingController();
-  bool _isCheckingSession = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkActiveSession();
-  }
-
-  /// Sprawdza, czy w pamięci podręcznej urządzenie ma zapisaną aktywną sesję pokoju.
-  Future<void> _checkActiveSession() async {
-    final activeRoomId = await getActiveRoomId();
-    if (!mounted) return;
-
-    if (activeRoomId != null && activeRoomId.isNotEmpty) {
-      _navigateToSession(activeRoomId);
-    } else {
-      setState(() {
-        _isCheckingSession = false;
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -46,7 +27,8 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
 
   void _generateAndFillCode() {
     FocusScope.of(context).unfocus();
-    final newCode = generateRoomCode();
+    final controller = ref.read(roomControllerProvider.notifier);
+    final newCode = controller.generateNewCode();
     _pinController.text = newCode;
     _copyToClipboard(newCode);
   }
@@ -67,8 +49,7 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
     if (pin.isEmpty) return;
 
     FocusScope.of(context).unfocus();
-
-    await saveActiveRoomId(pin);
+    await ref.read(roomControllerProvider.notifier).saveRoom(pin);
 
     if (!mounted) return;
     _navigateToSession(pin);
@@ -81,12 +62,10 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
             builder: (context) => SessionScreen(roomId: roomId),
           ),
         )
-        .then((_) {
-          // Po powrocie z ekranu sesji (np. kliknięcie w ikonę wyjścia / rozłączenie)
-          // upewniamy się, że użytkownik pozostaje na widoku wpisywania kodu pokoju.
+        .then((_) async {
+          await ref.read(roomControllerProvider.notifier).clearRoom();
           if (mounted) {
             setState(() {
-              _isCheckingSession = false;
               _pinController.clear();
             });
           }
@@ -95,8 +74,16 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ekran ładowania podczas weryfikacji aktywnej sesji
-    if (_isCheckingSession) {
+    final roomState = ref.watch(roomControllerProvider);
+
+    if (roomState.isCheckingSession) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (roomState.activeRoomId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _navigateToSession(roomState.activeRoomId);
+      });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -132,11 +119,7 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(
-                            Icons.graphic_eq,
-                            size: 80,
-                            color: Color(0xFF6366F1),
-                          ),
+                          const RoomHeaderIcon(),
                           const SizedBox(height: 32),
                           Text(
                             l10n.roomInputSubtitle,
@@ -145,59 +128,20 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
                                 ?.copyWith(color: const Color(0xFF94A3B8)),
                           ),
                           const SizedBox(height: 24),
-                          TextField(
+                          RoomInputField(
                             controller: _pinController,
-                            textAlign: TextAlign.center,
-                            textInputAction: TextInputAction.done,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              letterSpacing: 4,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: l10n.roomInputHint,
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.copy,
-                                  color: Colors.white70,
-                                ),
-                                tooltip: l10n.copyCodeTooltip,
-                                onPressed: () => _copyToClipboard(
-                                  _pinController.text.trim(),
-                                ),
-                              ),
-                            ),
+                            hintText: l10n.roomInputHint,
+                            tooltipText: l10n.copyCodeTooltip,
+                            onCopy: () =>
+                                _copyToClipboard(_pinController.text.trim()),
                             onSubmitted: (_) => _joinRoom(),
                           ),
                           const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton(
-                                  onPressed: _generateAndFillCode,
-                                  child: Text(
-                                    l10n.createRoomButton,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton(
-                                  onPressed: _joinRoom,
-                                  child: Text(
-                                    l10n.connectButton,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          RoomActionButtons(
+                            createButtonText: l10n.createRoomButton,
+                            connectButtonText: l10n.connectButton,
+                            onCreate: _generateAndFillCode,
+                            onConnect: _joinRoom,
                           ),
                         ],
                       ),
