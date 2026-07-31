@@ -1,4 +1,4 @@
-import 'env_config.dart';
+import 'package:app/config/env_config.dart';
 
 class ProdConfig implements EnvConfig {
   @override

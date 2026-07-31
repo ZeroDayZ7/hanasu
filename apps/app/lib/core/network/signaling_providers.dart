@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'mock_signaling_client.dart';
-import 'signaling_client.dart';
-import 'ws_signaling_client.dart';
+import 'package:app/core/network/mock_signaling_client.dart';
+import 'package:app/core/network/signaling_client.dart';
+import 'package:app/core/network/ws_signaling_client.dart';
 
 const bool useMockSignaling = true;
 

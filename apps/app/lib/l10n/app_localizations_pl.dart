@@ -35,4 +35,34 @@ class AppLocalizationsPl extends AppLocalizations {
   String connectingToRoom(String pin) {
     return 'Łączenie z pokojem $pin...';
   }
+
+  @override
+  String roomTitle(String roomId) {
+    return 'POKÓJ: $roomId';
+  }
+
+  @override
+  String peerJoined(String peerId) {
+    return 'Peer $peerId dołączył do pokoju';
+  }
+
+  @override
+  String get peerLeft => 'Peer opuścił pokój';
+
+  @override
+  String get statusDisconnected => 'Rozłączono';
+
+  @override
+  String get statusConnecting => 'Łączenie z serwerem...';
+
+  @override
+  String statusConnectedWithPeer(String peerId) {
+    return 'Połączono z: $peerId';
+  }
+
+  @override
+  String get statusWaitingForPeer => 'Oczekiwanie na drugiego użytkownika...';
+
+  @override
+  String get statusError => 'Błąd połączenia!';
 }

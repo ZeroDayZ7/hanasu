@@ -17,5 +17,28 @@
     "placeholders": {
       "pin": { "type": "String" }
     }
-  }
+  },
+  "roomTitle": "POKÓJ: {roomId}",
+  "@roomTitle": {
+    "placeholders": {
+      "roomId": { "type": "String" }
+    }
+  },
+  "peerJoined": "Peer {peerId} dołączył do pokoju",
+  "@peerJoined": {
+    "placeholders": {
+      "peerId": { "type": "String" }
+    }
+  },
+  "peerLeft": "Peer opuścił pokój",
+  "statusDisconnected": "Rozłączono",
+  "statusConnecting": "Łączenie z serwerem...",
+  "statusConnectedWithPeer": "Połączono z: {peerId}",
+  "@statusConnectedWithPeer": {
+    "placeholders": {
+      "peerId": { "type": "String" }
+    }
+  },
+  "statusWaitingForPeer": "Oczekiwanie na drugiego użytkownika...",
+  "statusError": "Błąd połączenia!"
 }

@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'config/env_config.dart';
-import 'config/env_dev.dart';
-import 'config/env_prod.dart';
-import 'core/locale/locale_provider.dart';
-import 'core/theme/app_theme.dart';
-import 'features/room/presentation/room_screen.dart';
+import 'package:app/config/env_config.dart';
+import 'package:app/config/env_dev.dart';
+import 'package:app/config/env_prod.dart';
+import 'package:app/core/locale/locale_provider.dart';
+import 'package:app/core/theme/app_theme.dart';
+import 'package:app/features/room/presentation/room_screen.dart';
 
 void main() {
   mainDev();

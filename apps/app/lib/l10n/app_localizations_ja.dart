@@ -15,7 +15,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get roomInputHint => '例: xyz15';
 
   @override
-  String get roomInputSubtitle => 'ルームコードを入力するか新しく作成します';
+  String get roomInputSubtitle => 'ルームコードを入力するか、新規生成してください';
 
   @override
   String get connectButton => '接続';
@@ -35,4 +35,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String connectingToRoom(String pin) {
     return 'ルーム $pin に接続中...';
   }
+
+  @override
+  String roomTitle(String roomId) {
+    return 'ルーム: $roomId';
+  }
+
+  @override
+  String peerJoined(String peerId) {
+    return 'ピア $peerId が参加しました';
+  }
+
+  @override
+  String get peerLeft => 'ピアが退出しました';
+
+  @override
+  String get statusDisconnected => '切断済み';
+
+  @override
+  String get statusConnecting => 'サーバーに接続中...';
+
+  @override
+  String statusConnectedWithPeer(String peerId) {
+    return '接続先: $peerId';
+  }
+
+  @override
+  String get statusWaitingForPeer => '相手の接続を待機中...';
+
+  @override
+  String get statusError => '接続エラー！';
 }

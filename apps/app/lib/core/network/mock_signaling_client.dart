@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'signaling_client.dart';
+import 'package:app/core/network/signaling_client.dart';
 
 class MockSignalingClient implements SignalingClient {
   final _stateController = StreamController<SignalingState>.broadcast();

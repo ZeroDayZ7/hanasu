@@ -1,12 +1,12 @@
 {
   "@@locale": "en",
   "appTitle": "HANASU :: P2P VOICE",
-  "roomInputHint": "e.g. xyz15",
-  "roomInputSubtitle": "Enter room code or generate a new one",
+  "roomInputHint": "e.g., xyz15",
+  "roomInputSubtitle": "Enter a room code or generate a new one",
   "connectButton": "CONNECT",
   "createRoomButton": "CREATE ROOM",
   "copyCodeTooltip": "Copy code",
-  "codeCopiedSnackBar": "Room code copied to clipboard: {pin}",
+  "codeCopiedSnackBar": "Copied room code to clipboard: {pin}",
   "connectingToRoom": "Connecting to room {pin}...",
   "@codeCopiedSnackBar": {
     "placeholders": {
@@ -17,5 +17,28 @@
     "placeholders": {
       "pin": { "type": "String" }
     }
-  }
+  },
+  "roomTitle": "ROOM: {roomId}",
+  "@roomTitle": {
+    "placeholders": {
+      "roomId": { "type": "String" }
+    }
+  },
+  "peerJoined": "Peer {peerId} joined the room",
+  "@peerJoined": {
+    "placeholders": {
+      "peerId": { "type": "String" }
+    }
+  },
+  "peerLeft": "Peer left the room",
+  "statusDisconnected": "Disconnected",
+  "statusConnecting": "Connecting to server...",
+  "statusConnectedWithPeer": "Connected to: {peerId}",
+  "@statusConnectedWithPeer": {
+    "placeholders": {
+      "peerId": { "type": "String" }
+    }
+  },
+  "statusWaitingForPeer": "Waiting for peer...",
+  "statusError": "Connection error!"
 }

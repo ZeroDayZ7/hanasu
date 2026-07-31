@@ -109,13 +109,13 @@ abstract class AppLocalizations {
   /// No description provided for @roomInputHint.
   ///
   /// In en, this message translates to:
-  /// **'e.g. xyz15'**
+  /// **'e.g., xyz15'**
   String get roomInputHint;
 
   /// No description provided for @roomInputSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Enter room code or generate a new one'**
+  /// **'Enter a room code or generate a new one'**
   String get roomInputSubtitle;
 
   /// No description provided for @connectButton.
@@ -139,7 +139,7 @@ abstract class AppLocalizations {
   /// No description provided for @codeCopiedSnackBar.
   ///
   /// In en, this message translates to:
-  /// **'Room code copied to clipboard: {pin}'**
+  /// **'Copied room code to clipboard: {pin}'**
   String codeCopiedSnackBar(String pin);
 
   /// No description provided for @connectingToRoom.
@@ -147,6 +147,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connecting to room {pin}...'**
   String connectingToRoom(String pin);
+
+  /// No description provided for @roomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ROOM: {roomId}'**
+  String roomTitle(String roomId);
+
+  /// No description provided for @peerJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'Peer {peerId} joined the room'**
+  String peerJoined(String peerId);
+
+  /// No description provided for @peerLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Peer left the room'**
+  String get peerLeft;
+
+  /// No description provided for @statusDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get statusDisconnected;
+
+  /// No description provided for @statusConnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to server...'**
+  String get statusConnecting;
+
+  /// No description provided for @statusConnectedWithPeer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to: {peerId}'**
+  String statusConnectedWithPeer(String peerId);
+
+  /// No description provided for @statusWaitingForPeer.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for peer...'**
+  String get statusWaitingForPeer;
+
+  /// No description provided for @statusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error!'**
+  String get statusError;
 }
 
 class _AppLocalizationsDelegate

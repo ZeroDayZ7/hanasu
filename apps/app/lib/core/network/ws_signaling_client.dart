@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../../config/env_config.dart';
-import 'signaling_client.dart';
+import 'package:app/config/env_config.dart';
+import 'package:app/core/network/signaling_client.dart';
 
 class WsSignalingClient implements SignalingClient {
   WebSocketChannel? _channel;

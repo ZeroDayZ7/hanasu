@@ -2,7 +2,7 @@
   "@@locale": "ja",
   "appTitle": "HANASU :: P2P VOICE",
   "roomInputHint": "例: xyz15",
-  "roomInputSubtitle": "ルームコードを入力するか新しく作成します",
+  "roomInputSubtitle": "ルームコードを入力するか、新規生成してください",
   "connectButton": "接続",
   "createRoomButton": "ルーム作成",
   "copyCodeTooltip": "コードをコピー",
@@ -17,5 +17,28 @@
     "placeholders": {
       "pin": { "type": "String" }
     }
-  }
+  },
+  "roomTitle": "ルーム: {roomId}",
+  "@roomTitle": {
+    "placeholders": {
+      "roomId": { "type": "String" }
+    }
+  },
+  "peerJoined": "ピア {peerId} が参加しました",
+  "@peerJoined": {
+    "placeholders": {
+      "peerId": { "type": "String" }
+    }
+  },
+  "peerLeft": "ピアが退出しました",
+  "statusDisconnected": "切断済み",
+  "statusConnecting": "サーバーに接続中...",
+  "statusConnectedWithPeer": "接続先: {peerId}",
+  "@statusConnectedWithPeer": {
+    "placeholders": {
+      "peerId": { "type": "String" }
+    }
+  },
+  "statusWaitingForPeer": "相手の接続を待機中...",
+  "statusError": "接続エラー！"
 }

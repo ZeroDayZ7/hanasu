@@ -1,11 +1,11 @@
+import 'package:app/core/locale/language_selector_widget.dart';
+import 'package:app/features/room/domain/room_code_generator.dart';
+import 'package:app/features/session/data/session_storage.dart';
+import 'package:app/features/session/presentation/session_screen.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../config/env_config.dart';
-import '../../../core/locale/language_selector_widget.dart';
-import '../domain/room_code_generator.dart';
 
 class RoomScreen extends ConsumerStatefulWidget {
   const RoomScreen({super.key});
@@ -38,17 +38,16 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
     ).showSnackBar(SnackBar(content: Text(l10n.codeCopiedSnackBar(code))));
   }
 
-  void _joinRoom() {
+  Future<void> _joinRoom() async {
     final pin = _pinController.text.trim();
     if (pin.isEmpty) return;
 
-    final l10n = AppLocalizations.of(context)!;
-    final message =
-        '${l10n.connectingToRoom(pin)} (${EnvConfig.current.wsBaseUrl})';
+    await saveActiveRoomId(pin);
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (context) => SessionScreen(roomId: pin)),
+    );
   }
 
   @override
