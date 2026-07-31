@@ -254,6 +254,8 @@ final class WebRtcService {
       if (event.track.kind == 'audio') {
         event.track.enabled = true;
 
+        Helper.setSpeakerphoneOn(true);
+
         _logger.i(
           '[Remote Audio Track] Configured. Enabled: ${event.track.enabled}, Muted: ${event.track.muted}',
           module: 'WebRTC',

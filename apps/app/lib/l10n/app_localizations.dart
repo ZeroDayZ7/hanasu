@@ -148,6 +148,18 @@ abstract class AppLocalizations {
   /// **'Connecting to room {pin}...'**
   String connectingToRoom(String pin);
 
+  /// No description provided for @micEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone: ON'**
+  String get micEnabled;
+
+  /// No description provided for @micMuted.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone: MUTED'**
+  String get micMuted;
+
   /// No description provided for @roomTitle.
   ///
   /// In en, this message translates to:

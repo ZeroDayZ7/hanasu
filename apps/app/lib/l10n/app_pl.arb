@@ -8,6 +8,8 @@
   "copyCodeTooltip": "Kopiuj kod",
   "codeCopiedSnackBar": "Skopiowano kod pokoju do schowka: {pin}",
   "connectingToRoom": "Łączenie z pokojem {pin}...",
+  "micEnabled": "Mikrofon: WŁĄCZONY",
+  "micMuted": "Mikrofon: WYCISZONY",
   "@codeCopiedSnackBar": {
     "placeholders": {
       "pin": { "type": "String" }

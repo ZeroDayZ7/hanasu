@@ -8,6 +8,8 @@
   "copyCodeTooltip": "コードをコピー",
   "codeCopiedSnackBar": "ルームコードをクリップボードにコピーしました: {pin}",
   "connectingToRoom": "ルーム {pin} に接続中...",
+  "micEnabled": "マイク：オン",
+  "micMuted": "マイク：ミュート",
   "@codeCopiedSnackBar": {
     "placeholders": {
       "pin": { "type": "String" }

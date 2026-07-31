@@ -18,7 +18,12 @@
     "**/pubspec.lock": true,
     // "**/LICENSE": true,
     "**/devtools_options.yaml": true,
-    "**/flutter_launcher_icons.yaml": true
+    "**/flutter_launcher_icons.yaml": true,
+
+    "**/app_localizations_en.dart": true,
+    "**/app_localizations_ja.dart": true,
+    "**/app_localizations_pl.dart": true,
+    "**/app_localizations.dart": true
   },
 
   "search.exclude": {

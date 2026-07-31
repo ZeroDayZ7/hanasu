@@ -37,6 +37,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get micEnabled => 'Microphone: ON';
+
+  @override
+  String get micMuted => 'Microphone: MUTED';
+
+  @override
   String roomTitle(String roomId) {
     return 'ROOM: $roomId';
   }

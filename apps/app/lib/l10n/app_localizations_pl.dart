@@ -37,6 +37,12 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get micEnabled => 'Mikrofon: WŁĄCZONY';
+
+  @override
+  String get micMuted => 'Mikrofon: WYCISZONY';
+
+  @override
   String roomTitle(String roomId) {
     return 'POKÓJ: $roomId';
   }
