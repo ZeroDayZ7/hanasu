@@ -13,3 +13,9 @@ A real-time speech translation system operating over a P2P / Tailscale network u
 
 - Docker & Docker Compose
 - Flutter SDK (for client apps)
+
+## Interface WIP
+
+<p align="center">
+  <img src="docs/img.png" alt="Hanasu Banner" />
+</p>
