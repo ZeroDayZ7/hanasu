@@ -15,7 +15,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  mainDev();
+  if (kReleaseMode) {
+    mainProd();
+  } else {
+    mainDev();
+  }
 }
 
 void mainDev() {

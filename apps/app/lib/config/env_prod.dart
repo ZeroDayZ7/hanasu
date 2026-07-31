@@ -2,10 +2,10 @@ import 'package:app/config/env_config.dart';
 
 class ProdConfig implements EnvConfig {
   @override
-  String get apiBaseUrl => 'https://hanasu.tailnet-name.ts.net';
+  String get apiBaseUrl => 'http://100.88.179.37:8080';
 
   @override
-  String get wsBaseUrl => 'wss://hanasu.tailnet-name.ts.net/ws';
+  String get wsBaseUrl => 'ws://100.88.179.37:8080/ws';
 
   @override
   bool get enableLogging => false;
