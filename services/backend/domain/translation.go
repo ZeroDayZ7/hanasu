@@ -1,0 +1,28 @@
+package domain
+
+import "context"
+
+type TranslationRequest struct {
+	Text       string `json:"text"`
+	SourceLang string `json:"source_lang"`
+	TargetLang string `json:"target_lang"`
+}
+
+type TranslationResponse struct {
+	TranslatedText string `json:"translated_text"`
+	Provider       string `json:"provider"`
+}
+
+// Interfejs silnika tłumaczeń
+type Translator interface {
+	Translate(ctx context.Context, req TranslationRequest) (*TranslationResponse, error)
+	StreamTranslate(ctx context.Context, req TranslationRequest, ch chan<- string) error
+}
+
+// Typy komunikatów protokołu P2P / Signaling przez WebSocket
+type WSMessage struct {
+	Type    string      `json:"type"`    // "offer", "answer", "candidate", "translate", "audio_chunk"
+	Sender  string      `json:"sender"`  // ID / Alias nadawcy
+	Target  string      `json:"target"`  // ID odbiorcy w P2P
+	Payload interface{} `json:"payload"` // Treść pakietu
+}
