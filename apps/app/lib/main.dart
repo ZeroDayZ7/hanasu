@@ -1,3 +1,4 @@
+// apps/app/lib/main.dart
 import 'package:app/config/env_config.dart';
 import 'package:app/config/env_dev.dart';
 import 'package:app/config/env_prod.dart';

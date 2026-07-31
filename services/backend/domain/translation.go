@@ -1,3 +1,4 @@
+// services/backend/domain/translation.go
 package domain
 
 import "context"
@@ -21,6 +22,6 @@ type Translator interface {
 type WSMessage struct {
 	Type    string `json:"type"`
 	Sender  string `json:"sender"`
-	Target  string `json:"target"`
-	Payload any    `json:"payload"`
+	Target  string `json:"target,omitempty"`
+	Payload any    `json:"payload,omitempty"`
 }

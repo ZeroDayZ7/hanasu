@@ -1,77 +1,108 @@
+// services/backend/transport/ws/router.go
 package ws
 
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
+
 	"server/domain"
 
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Przyjęcie połączeń w sieci prywatnej (np. Tailscale)
+		return true
 	},
 }
 
-// ServeWS obsługuje podniesienie połączenia HTTP do WebSocket
-func ServeWS(hub *Hub, t domain.Translator, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Printf("Błąd upgrade'u do WebSocket: %v", err)
+func ServeWS(logger *zap.Logger, hub *Hub, t domain.Translator, w http.ResponseWriter, r *http.Request) {
+	roomID := r.URL.Query().Get("room")
+	if roomID == "" {
+		logger.Warn("Connection attempt without room parameter", zap.String("remote_addr", r.RemoteAddr))
+		http.Error(w, "Room ID parameter is required", http.StatusBadRequest)
 		return
 	}
 
-	hub.register <- conn
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Error("Failed to upgrade connection to WebSocket", zap.Error(err), zap.String("remote_addr", r.RemoteAddr))
+		return
+	}
 
-	go handleConnection(r.Context(), hub, t, conn)
+	client := &Client{
+		ID:     r.RemoteAddr,
+		RoomID: roomID,
+		Conn:   conn,
+		Send:   make(chan []byte, 256),
+	}
+
+	hub.register <- client
+
+	go handleConnection(r.Context(), logger, hub, t, client)
 }
 
-func handleConnection(ctx context.Context, hub *Hub, t domain.Translator, conn *websocket.Conn) {
+func handleConnection(ctx context.Context, logger *zap.Logger, hub *Hub, t domain.Translator, client *Client) {
 	defer func() {
-		hub.unregister <- conn
-		conn.Close()
+		logger.Info("Client disconnected", zap.String("remote_addr", client.ID), zap.String("room_id", client.RoomID))
+		hub.unregister <- client
 	}()
 
 	for {
-		_, message, err := conn.ReadMessage()
+		_, message, err := client.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("Nieoczekiwane zamknięcie WS: %v", err)
+				logger.Warn("Unexpected WebSocket connection closure", zap.Error(err), zap.String("remote_addr", client.ID))
 			}
 			break
 		}
 
 		var wsMsg domain.WSMessage
 		if err := json.Unmarshal(message, &wsMsg); err != nil {
-			log.Printf("Błąd dekodowania pakietu WS: %v", err)
+			logger.Error("Failed to decode WS message", zap.Error(err), zap.ByteString("raw_message", message))
 			continue
 		}
 
+		logger.Debug("Received WS message",
+			zap.String("type", wsMsg.Type),
+			zap.String("sender", wsMsg.Sender),
+			zap.String("room_id", client.RoomID),
+		)
+
 		switch wsMsg.Type {
 		case "offer", "answer", "candidate":
-			hub.broadcast <- message
+			logger.Info("Relaying WebRTC signal",
+				zap.String("type", wsMsg.Type),
+				zap.String("sender", wsMsg.Sender),
+				zap.String("room_id", client.RoomID),
+			)
+			hub.broadcast <- MessageEnvelope{
+				RoomID: client.RoomID,
+				Sender: client,
+				Data:   message,
+			}
 
 		case "translate":
 			text, ok := wsMsg.Payload.(string)
 			if !ok {
-				log.Printf("Nieprawidłowy typ payloadu dla tłumaczenia od [%s]", wsMsg.Sender)
+				logger.Warn("Invalid payload type for translation", zap.String("sender", wsMsg.Sender))
 				continue
 			}
 
-			req := domain.TranslationRequest{
-				Text: text,
-			}
+			logger.Debug("Starting translation", zap.String("sender", wsMsg.Sender), zap.String("text", text))
 
+			req := domain.TranslationRequest{Text: text}
 			resp, err := t.Translate(ctx, req)
+
 			var translatedText string
 			if err != nil || resp == nil {
-				log.Printf("Błąd tłumaczenia tekstu od [%s]: %v", wsMsg.Sender, err)
-				translatedText = text // Fallback do oryginalnego tekstu
+				logger.Error("Translation failed, falling back to original text", zap.String("sender", wsMsg.Sender), zap.Error(err))
+				translatedText = text
 			} else {
 				translatedText = resp.TranslatedText
+				logger.Debug("Translation successful", zap.String("result", translatedText))
 			}
 
 			responsePayload, err := json.Marshal(domain.WSMessage{
@@ -80,14 +111,23 @@ func handleConnection(ctx context.Context, hub *Hub, t domain.Translator, conn *
 				Payload: translatedText,
 			})
 			if err != nil {
-				log.Printf("Błąd kodowania odpowiedzi WS: %v", err)
+				logger.Error("Failed to marshal WS response", zap.Error(err))
 				continue
 			}
 
-			hub.broadcast <- responsePayload
+			hub.broadcast <- MessageEnvelope{
+				RoomID: client.RoomID,
+				Sender: nil,
+				Data:   responsePayload,
+			}
 
 		default:
-			hub.broadcast <- message
+			logger.Debug("Handling default WS message type", zap.String("type", wsMsg.Type))
+			hub.broadcast <- MessageEnvelope{
+				RoomID: client.RoomID,
+				Sender: client,
+				Data:   message,
+			}
 		}
 	}
 }

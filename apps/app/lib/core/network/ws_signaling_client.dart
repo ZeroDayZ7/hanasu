@@ -1,3 +1,4 @@
+// lib/core/network/ws_signaling_client.dart
 import 'dart:async';
 import 'dart:convert';
 
@@ -9,8 +10,15 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 final class WsSignalingClient implements SignalingClient {
   final AppLogger _logger;
   WebSocketChannel? _channel;
+  StreamSubscription<dynamic>? _subscription;
+
   final _stateController = StreamController<SignalingState>.broadcast();
   final _eventController = StreamController<SignalingEvent>.broadcast();
+
+  String? _currentRoomId;
+  Timer? _reconnectTimer;
+  bool _isConnecting = false;
+  bool _isExplicitlyClosed = false;
 
   WsSignalingClient(this._logger);
 
@@ -22,6 +30,14 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   Future<void> connect(String roomId) async {
+    _currentRoomId = roomId;
+    _isExplicitlyClosed = false;
+
+    if (_isConnecting) return;
+    _isConnecting = true;
+
+    await _cleanupConnection();
+
     _logger.i('Connecting to WebSocket room: $roomId', module: 'WsSignaling');
     _stateController.add(SignalingState.connecting);
 
@@ -29,13 +45,22 @@ final class WsSignalingClient implements SignalingClient {
       final uri = Uri.parse('${EnvConfig.current.wsBaseUrl}?room=$roomId');
       _channel = WebSocketChannel.connect(uri);
 
-      _channel!.stream.listen(
+      // Oczekiwanie na gotowość gniazda
+      await _channel!.ready;
+
+      _isConnecting = false;
+      _stopReconnectTimer();
+
+      _stateController.add(SignalingState.connected);
+      _logger.i('WebSocket connected successfully', module: 'WsSignaling');
+
+      _subscription = _channel!.stream.listen(
         (rawMessage) {
           _handleIncomingMessage(rawMessage);
         },
         onDone: () {
           _logger.w('WebSocket connection closed', module: 'WsSignaling');
-          _stateController.add(SignalingState.disconnected);
+          _handleConnectionLoss();
         },
         onError: (Object error, Object? stackTrace) {
           _logger.e(
@@ -44,12 +69,9 @@ final class WsSignalingClient implements SignalingClient {
             error: error,
             stackTrace: stackTrace is StackTrace ? stackTrace : null,
           );
-          _stateController.add(SignalingState.error);
+          _handleConnectionLoss();
         },
       );
-
-      _stateController.add(SignalingState.connected);
-      _logger.i('WebSocket connected successfully', module: 'WsSignaling');
     } catch (e, st) {
       _logger.e(
         'Failed to connect to WebSocket',
@@ -57,8 +79,50 @@ final class WsSignalingClient implements SignalingClient {
         error: e,
         stackTrace: st,
       );
-      _stateController.add(SignalingState.error);
+      _isConnecting = false;
+      _handleConnectionLoss();
     }
+  }
+
+  void _handleConnectionLoss() {
+    _stateController.add(SignalingState.disconnected);
+
+    if (!_isExplicitlyClosed) {
+      _startReconnectTimer();
+    }
+  }
+
+  void _startReconnectTimer() {
+    if (_reconnectTimer?.isActive ?? false) return;
+
+    _logger.i(
+      'Starting auto-reconnect timer (retrying every 3s)...',
+      module: 'WsSignaling',
+    );
+    _reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (_currentRoomId != null && !_isExplicitlyClosed && !_isConnecting) {
+        _logger.i(
+          'Attempting auto-reconnect to room: $_currentRoomId',
+          module: 'WsSignaling',
+        );
+        connect(_currentRoomId!);
+      }
+    });
+  }
+
+  void _stopReconnectTimer() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+  }
+
+  Future<void> _cleanupConnection() async {
+    await _subscription?.cancel();
+    _subscription = null;
+
+    try {
+      await _channel?.sink.close();
+    } catch (_) {}
+    _channel = null;
   }
 
   void _handleIncomingMessage(dynamic raw) {
@@ -69,37 +133,68 @@ final class WsSignalingClient implements SignalingClient {
 
       switch (type) {
         case 'peer_joined':
-          final peerId = map['peer_id'] as String;
+          final payload = map['payload'] as Map<String, dynamic>?;
+          final peerId =
+              payload?['peer_id'] as String? ??
+              map['peer_id'] as String? ??
+              'unknown';
           _logger.d('Event: Peer joined -> $peerId', module: 'WsSignaling');
           _eventController.add(PeerJoinedEvent(peerId));
           break;
+
         case 'peer_left':
-          final peerId = map['peer_id'] as String;
+          final payload = map['payload'] as Map<String, dynamic>?;
+          final peerId =
+              payload?['peer_id'] as String? ??
+              map['peer_id'] as String? ??
+              'unknown';
           _logger.d('Event: Peer left -> $peerId', module: 'WsSignaling');
           _eventController.add(PeerLeftEvent(peerId));
           break;
+
         case 'offer':
-          final senderId = map['sender_id'] as String;
+          final senderId =
+              map['sender'] as String? ?? map['sender_id'] as String? ?? '';
+          final payload = map['payload'] as Map<String, dynamic>?;
+          final sdp = payload?['sdp'] as String? ?? map['sdp'] as String? ?? '';
           _logger.d(
             'Event: Offer received from -> $senderId',
             module: 'WsSignaling',
           );
           _eventController.add(
-            OfferReceivedEvent(senderId: senderId, sdp: map['sdp'] as String),
+            OfferReceivedEvent(senderId: senderId, sdp: sdp),
           );
           break;
+
         case 'answer':
-          final senderId = map['sender_id'] as String;
+          final senderId =
+              map['sender'] as String? ?? map['sender_id'] as String? ?? '';
+          final payload = map['payload'] as Map<String, dynamic>?;
+          final sdp = payload?['sdp'] as String? ?? map['sdp'] as String? ?? '';
           _logger.d(
             'Event: Answer received from -> $senderId',
             module: 'WsSignaling',
           );
           _eventController.add(
-            AnswerReceivedEvent(senderId: senderId, sdp: map['sdp'] as String),
+            AnswerReceivedEvent(senderId: senderId, sdp: sdp),
           );
           break;
+
         case 'candidate':
-          final senderId = map['sender_id'] as String;
+          final senderId =
+              map['sender'] as String? ?? map['sender_id'] as String? ?? '';
+          final payload = map['payload'] as Map<String, dynamic>?;
+          final candidate =
+              payload?['candidate'] as String? ??
+              map['candidate'] as String? ??
+              '';
+          final sdpMid =
+              payload?['sdpMid'] as String? ?? map['sdpMid'] as String? ?? '';
+          final sdpMLineIndex =
+              payload?['sdpMLineIndex'] as int? ??
+              map['sdpMLineIndex'] as int? ??
+              0;
+
           _logger.t(
             'Event: ICE Candidate received from -> $senderId',
             module: 'WsSignaling',
@@ -107,12 +202,13 @@ final class WsSignalingClient implements SignalingClient {
           _eventController.add(
             IceCandidateReceivedEvent(
               senderId: senderId,
-              candidate: map['candidate'] as String,
-              sdpMid: map['sdpMid'] as String,
-              sdpMLineIndex: map['sdpMLineIndex'] as int,
+              candidate: candidate,
+              sdpMid: sdpMid,
+              sdpMLineIndex: sdpMLineIndex,
             ),
           );
           break;
+
         default:
           _logger.w(
             'Unknown message type received: $type',
@@ -175,8 +271,14 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   Future<void> disconnect() async {
-    _logger.i('Disconnecting WebSocket client', module: 'WsSignaling');
-    await _channel?.sink.close();
+    _logger.i(
+      'Disconnecting WebSocket client explicitly',
+      module: 'WsSignaling',
+    );
+    _isExplicitlyClosed = true;
+    _stopReconnectTimer();
+    await _cleanupConnection();
+    _currentRoomId = null;
     _stateController.add(SignalingState.disconnected);
   }
 }

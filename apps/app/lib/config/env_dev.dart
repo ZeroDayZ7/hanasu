@@ -2,14 +2,14 @@ import 'package:app/config/env_config.dart';
 
 class DevConfig implements EnvConfig {
   @override
-  String get apiBaseUrl => 'http://10.0.2.2:8080';
+  String get apiBaseUrl => 'http://100.88.179.37:8080';
 
   @override
-  String get wsBaseUrl => 'ws://10.0.2.2:8080/ws';
+  String get wsBaseUrl => 'ws://100.88.179.37:8080/ws';
 
   @override
   bool get enableLogging => true;
 
   @override
-  bool get useMockSignaling => true; // Lub false, w zależności od potrzeb deweloperskich
+  bool get useMockSignaling => false;
 }

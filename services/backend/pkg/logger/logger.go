@@ -44,7 +44,7 @@ func Init(env string) {
 	})
 }
 
-func get() *zap.Logger {
+func Get() *zap.Logger {
 	if log == nil {
 		Init("development")
 	}
@@ -54,21 +54,21 @@ func get() *zap.Logger {
 // Standalone Functional API
 
 func Info(msg string, fields ...zap.Field) {
-	get().Info(msg, fields...)
+	Get().Info(msg, fields...)
 }
 
 func Debug(msg string, fields ...zap.Field) {
-	get().Debug(msg, fields...)
+	Get().Debug(msg, fields...)
 }
 
 func Warn(msg string, fields ...zap.Field) {
-	get().Warn(msg, fields...)
+	Get().Warn(msg, fields...)
 }
 
 func Error(msg string, fields ...zap.Field) {
-	get().Error(msg, fields...)
+	Get().Error(msg, fields...)
 }
 
 func Fatal(msg string, fields ...zap.Field) {
-	get().Fatal(msg, fields...)
+	Get().Fatal(msg, fields...)
 }

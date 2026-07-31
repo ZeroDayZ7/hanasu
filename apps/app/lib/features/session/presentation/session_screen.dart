@@ -1,5 +1,7 @@
+// apps/app/lib/features/session/presentation/session_screen.dart
 import 'dart:async';
 
+import 'package:app/core/audio/audio_providers.dart';
 import 'package:app/core/network/signaling_client.dart';
 import 'package:app/core/network/signaling_providers.dart';
 import 'package:app/features/session/data/session_storage.dart';
@@ -36,6 +38,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     unawaited(saveActiveRoomId(widget.roomId));
 
     final signaling = ref.read(signalingClientProvider);
+    ref.read(webRtcServiceProvider);
 
     _stateSub = signaling.stateStream.listen((state) {
       if (mounted) {
@@ -86,9 +89,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     super.dispose();
   }
 
+  void _onTalkStart() {
+    setState(() => _isTalking = true);
+    ref.read(webRtcServiceProvider).setMicrophoneMuted(false);
+  }
+
+  void _onTalkEnd() {
+    setState(() => _isTalking = false);
+    ref.read(webRtcServiceProvider).setMicrophoneMuted(true);
+  }
+
   Future<void> _onLeave() async {
     final signaling = ref.read(signalingClientProvider);
     await signaling.disconnect();
+    await ref.read(webRtcServiceProvider).closeConnection();
     await clearActiveRoomId();
 
     if (mounted) {
@@ -243,9 +257,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 32, top: 16),
             child: GestureDetector(
-              onTapDown: (_) => setState(() => _isTalking = true),
-              onTapUp: (_) => setState(() => _isTalking = false),
-              onTapCancel: () => setState(() => _isTalking = false),
+              onTapDown: (_) => _onTalkStart(),
+              onTapUp: (_) => _onTalkEnd(),
+              onTapCancel: () => _onTalkEnd(),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 height: 100,
