@@ -1,15 +1,17 @@
 # Hanasu
 
-System tłumaczenia mowy w czasie rzeczywistym przez sieć P2P / Tailscale z wykorzystaniem syntezy mowy Sherpa-ONNX.
+A real-time speech translation system operating over a P2P / Tailscale network using the Sherpa-ONNX speech synthesis engine.
 
-## Struktura projektu
+## 🏗️ Project Structure
 
-- `apps/` - Aplikacje klienckie (np. Flutter)
-- `services/backend/` - Serwis brokerski / API (obsługa pokojów PIN i tłumaczeń)
-- `services/tts-engine/` - Silnik syntezy mowy Sherpa-ONNX w Dockerze
-- `data/` - Przechowywanie lokalnych modeli i plików wyjściowych (ignorowane przez Git)
+- `apps/` – Client applications (Flutter).
+- `services/backend/` – Broker service & API (handles PIN-protected rooms and translation management).
+- `services/tts-engine/` – Dockerized Sherpa-ONNX speech synthesis engine.
+- `data/` – Local models and output storage (ignored by Git).
 
-## Uruchomienie środowiska
+## 🚀 Getting Started
 
-```bash
-docker compose up -d --build
+### Prerequisites
+
+- Docker & Docker Compose
+- Flutter SDK (for client apps)

@@ -16,7 +16,7 @@
     "**/test": true,
     "**/.gitattributes": true,
     "**/pubspec.lock": true,
-    "**/LICENSE": true,
+    // "**/LICENSE": true,
     "**/devtools_options.yaml": true,
     "**/flutter_launcher_icons.yaml": true
   },
