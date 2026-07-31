@@ -1,0 +1,21 @@
+name: hanasu
+
+services:
+  backend:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: hanasu-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+
+  tts-engine:
+    build:
+      context: ./services/tts-engine
+      dockerfile: Dockerfile
+    container_name: hanasu-tts
+    volumes:
+      - ./data/models:/models:ro
+      - ./data/output:/output
+    restart: unless-stopped

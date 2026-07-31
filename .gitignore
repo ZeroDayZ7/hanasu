@@ -1,0 +1,16 @@
+# User Data & Models
+data/models/*
+!data/models/.gitkeep
+data/output/*
+!data/output/.gitkeep
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Node / Go / Python binaries
+bin/
+dist/
+node_modules/
+*.exe

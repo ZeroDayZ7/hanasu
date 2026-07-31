@@ -1,0 +1,46 @@
+name: app
+description: "Hanasu"
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_riverpod: ^3.0.3
+  riverpod_annotation: ^4.0.0
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
+
+  dio: ^5.9.0
+  web_socket_channel: ^3.0.3
+
+  speech_to_text: ^7.0.0
+  just_audio: ^0.10.4
+  record: ^6.1.1
+
+  flutter_secure_storage: ^10.0.0
+  path_provider: ^2.1.5
+  uuid: ^4.5.1
+  logger: ^2.6.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  build_runner: ^2.12.0
+  riverpod_generator: ^4.0.0+1
+  freezed: ^3.2.3
+  json_serializable: ^6.11.2
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/
