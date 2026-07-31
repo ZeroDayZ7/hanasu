@@ -9,8 +9,6 @@ A real-time speech translation system operating over a P2P / Tailscale network u
 - `services/tts-engine/` – Dockerized Sherpa-ONNX speech synthesis engine.
 - `data/` – Local models and output storage (ignored by Git).
 
-## Getting Started
-
 ### Prerequisites
 
 - Docker & Docker Compose
