@@ -83,7 +83,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final l10n = AppLocalizations.of(context)!;
     final sessionProvider = sessionControllerProvider(widget.roomId);
 
-    // Automatyczne wyjście z ekranu w przypadku rozłączenia sesji przez serwer/peera
+    // Nasłuch do automatycznego nawigowania wstecz po rozłączeniu
     ref.listen(sessionProvider, (previous, next) {
       if (next.currentState == SignalingState.disconnected &&
           previous?.currentState != SignalingState.disconnected) {
@@ -124,7 +124,7 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
                     _getStatusText(state, peerId, l10n),
                 getStatusColor: _getStatusColor,
               ),
-              Expanded(child: ChatMessageList(messages: sessionState.messages)),
+              Expanded(child: ChatMessageList(roomId: widget.roomId)),
               MicrophoneControl(
                 isMicEnabled: sessionState.isMicEnabled,
                 onToggle: controller.toggleMicrophone,

@@ -9,6 +9,106 @@ part of 'session_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(SessionMessagesController)
+final sessionMessagesControllerProvider = SessionMessagesControllerFamily._();
+
+final class SessionMessagesControllerProvider
+    extends $NotifierProvider<SessionMessagesController, List<ChatMessage>> {
+  SessionMessagesControllerProvider._({
+    required SessionMessagesControllerFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'sessionMessagesControllerProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$sessionMessagesControllerHash();
+
+  @override
+  String toString() {
+    return r'sessionMessagesControllerProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  SessionMessagesController create() => SessionMessagesController();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(List<ChatMessage> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<List<ChatMessage>>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SessionMessagesControllerProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$sessionMessagesControllerHash() =>
+    r'c1dfec0344e2dd96ad94aa1746d30ed1727ca63d';
+
+final class SessionMessagesControllerFamily extends $Family
+    with
+        $ClassFamilyOverride<
+          SessionMessagesController,
+          List<ChatMessage>,
+          List<ChatMessage>,
+          List<ChatMessage>,
+          String
+        > {
+  SessionMessagesControllerFamily._()
+    : super(
+        retry: null,
+        name: r'sessionMessagesControllerProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  SessionMessagesControllerProvider call(String roomId) =>
+      SessionMessagesControllerProvider._(argument: roomId, from: this);
+
+  @override
+  String toString() => r'sessionMessagesControllerProvider';
+}
+
+abstract class _$SessionMessagesController
+    extends $Notifier<List<ChatMessage>> {
+  late final _$args = ref.$arg as String;
+  String get roomId => _$args;
+
+  List<ChatMessage> build(String roomId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<List<ChatMessage>, List<ChatMessage>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<List<ChatMessage>, List<ChatMessage>>,
+              List<ChatMessage>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}
+
 @ProviderFor(SessionController)
 final sessionControllerProvider = SessionControllerFamily._();
 
@@ -58,7 +158,7 @@ final class SessionControllerProvider
   }
 }
 
-String _$sessionControllerHash() => r'99e2bdad6d7366dc69bf819ed5ad6e8471436937';
+String _$sessionControllerHash() => r'aa0f875b12562c6a4d38d16dced43183d238f1ff';
 
 final class SessionControllerFamily extends $Family
     with

@@ -53,7 +53,7 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final roomState = ref.watch(roomControllerProvider);
+    final roomAsync = ref.watch(roomControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -83,39 +83,37 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              if (roomState.isLoading)
-                const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (roomState.errorMessage != null)
-                Expanded(
-                  child: Center(
+              Expanded(
+                child: roomAsync.when(
+                  data: (roomData) {
+                    if (roomData.rooms.isEmpty) {
+                      return Center(
+                        child: Text(
+                          l10n.noRoomsMessage,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      itemCount: roomData.rooms.length,
+                      itemBuilder: (context, index) {
+                        final room = roomData.rooms[index];
+                        return _buildRoomTile(room);
+                      },
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stackTrace) => Center(
                     child: Text(
-                      roomState.errorMessage!,
+                      error.toString(),
                       style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ),
-                )
-              else if (roomState.rooms.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      l10n.noRoomsMessage,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
                     ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: roomState.rooms.length,
-                    itemBuilder: (context, index) {
-                      final room = roomState.rooms[index];
-                      return _buildRoomTile(room);
-                    },
                   ),
                 ),
+              ),
             ],
           ),
         ),

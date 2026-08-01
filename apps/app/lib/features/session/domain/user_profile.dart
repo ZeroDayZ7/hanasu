@@ -1,39 +1,16 @@
-class UserProfile {
-  final String id;
-  final String nick;
-  final DateTime createdAt;
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-  const UserProfile({
-    required this.id,
-    required this.nick,
-    required this.createdAt,
-  });
+part 'user_profile.freezed.dart';
+part 'user_profile.g.dart';
 
-  UserProfile copyWith({
-    String? id,
-    String? nick,
-    DateTime? createdAt,
-  }) {
-    return UserProfile(
-      id: id ?? this.id,
-      nick: nick ?? this.nick,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
+@freezed
+abstract class UserProfile with _$UserProfile {
+  const factory UserProfile({
+    @JsonKey(defaultValue: '') required String id,
+    @JsonKey(defaultValue: '') required String nick,
+    @JsonKey(name: 'created_at') required DateTime createdAt,
+  }) = _UserProfile;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nick': nick,
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
-
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      id: json['id'] as String? ?? '',
-      nick: json['nick'] as String? ?? '',
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
-    );
-  }
+  factory UserProfile.fromJson(Map<String, dynamic> json) =>
+      _$UserProfileFromJson(json);
 }

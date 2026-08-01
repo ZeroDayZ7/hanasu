@@ -13,7 +13,7 @@ part of 'room_controller.dart';
 final roomControllerProvider = RoomControllerProvider._();
 
 final class RoomControllerProvider
-    extends $NotifierProvider<RoomController, RoomState> {
+    extends $AsyncNotifierProvider<RoomController, RoomData> {
   RoomControllerProvider._()
     : super(
         from: null,
@@ -31,29 +31,21 @@ final class RoomControllerProvider
   @$internal
   @override
   RoomController create() => RoomController();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(RoomState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<RoomState>(value),
-    );
-  }
 }
 
-String _$roomControllerHash() => r'5837c75eac501ff6c748185278ce2e1c0da849e1';
+String _$roomControllerHash() => r'40b59ca1387ebc036551ce4ba65d13c6ba3b8a91';
 
-abstract class _$RoomController extends $Notifier<RoomState> {
-  RoomState build();
+abstract class _$RoomController extends $AsyncNotifier<RoomData> {
+  FutureOr<RoomData> build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<RoomState, RoomState>;
+    final ref = this.ref as $Ref<AsyncValue<RoomData>, RoomData>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<RoomState, RoomState>,
-              RoomState,
+              AnyNotifier<AsyncValue<RoomData>, RoomData>,
+              AsyncValue<RoomData>,
               Object?,
               Object?
             >;

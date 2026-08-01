@@ -1,110 +1,54 @@
 import 'package:app/features/session/domain/message_status.dart';
 import 'package:app/features/session/domain/message_type.dart';
 import 'package:app/features/session/domain/translation_message.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'chat_message.freezed.dart';
+part 'chat_message.g.dart';
 
 enum MessageSource { me, other, system }
 
-class ChatMessage {
-  final String id;
-  final String roomId;
-  final String authorId;
-  final String authorNick;
-  final String text;
-  final TranslationMessage? translation;
-  final MessageType type;
-  final MessageStatus status;
-  final DateTime timestamp;
-  final MessageSource source; // Wymagane przez UI/Controller
+@freezed
+abstract class ChatMessage with _$ChatMessage {
+  const ChatMessage._(); // Wymagane dla własnych getterów/metod w klasie Freezed
 
-  const ChatMessage({
-    required this.id,
-    this.roomId = '',
-    this.authorId = '',
-    this.authorNick = '',
-    required this.text,
-    this.translation,
-    this.type = MessageType.text,
-    this.status = MessageStatus.sent,
-    required this.timestamp,
-    this.source = MessageSource.other, // Domyślnie nadawcą jest inny użytkownik
-  });
+  const factory ChatMessage({
+    @JsonKey(defaultValue: '') required String id,
+    @JsonKey(name: 'room_id', defaultValue: '') @Default('') String roomId,
+    @JsonKey(name: 'author_id', defaultValue: '') @Default('') String authorId,
+    @JsonKey(name: 'author_nick', defaultValue: '')
+    @Default('')
+    String authorNick,
+    required String text,
+    TranslationMessage? translation,
+    @Default(MessageType.text) MessageType type,
+    @Default(MessageStatus.sent) MessageStatus status,
+    required DateTime timestamp,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    @Default(MessageSource.other)
+    MessageSource source,
+  }) = _ChatMessage;
 
-  // Getter ułatwiający bezpośredni dostęp do tekstu tłumaczenia w UI
+  /// Getter ułatwiający bezpośredni dostęp do tekstu tłumaczenia w UI
   String? get translatedText => translation?.text;
 
-  ChatMessage copyWith({
-    String? id,
-    String? roomId,
-    String? authorId,
-    String? authorNick,
-    String? text,
-    TranslationMessage? translation,
-    MessageType? type,
-    MessageStatus? status,
-    DateTime? timestamp,
-    MessageSource? source,
-  }) {
-    return ChatMessage(
-      id: id ?? this.id,
-      roomId: roomId ?? this.roomId,
-      authorId: authorId ?? this.authorId,
-      authorNick: authorNick ?? this.authorNick,
-      text: text ?? this.text,
-      translation: translation ?? this.translation,
-      type: type ?? this.type,
-      status: status ?? this.status,
-      timestamp: timestamp ?? this.timestamp,
-      source: source ?? this.source,
-    );
-  }
+  factory ChatMessage.fromJson(Map<String, dynamic> json) =>
+      _$ChatMessageFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'room_id': roomId,
-      'author_id': authorId,
-      'author_nick': authorNick,
-      'text': text,
-      'translation': translation?.toJson(),
-      'type': type.toShortString(),
-      'status': status.toShortString(),
-      'timestamp': timestamp.toIso8601String(),
-    };
-  }
-
-  factory ChatMessage.fromJson(
+  /// Fabryka pomocnicza do rozwiązywania źródła wiadomości na podstawie ID użytkownika
+  factory ChatMessage.fromPayload(
     Map<String, dynamic> json, {
-    String? currentUserId, // Opcjonalny ID użytkownika do ustalenia źródła
+    String? currentUserId,
   }) {
-    final authorId = json['author_id'] as String? ?? '';
-
-    // Automatyczne ustalanie źródła wiadomości na podstawie ID
+    final message = ChatMessage.fromJson(json);
+    
     MessageSource resolvedSource = MessageSource.other;
-    if (json['type'] == 'system') {
+    if (message.type == MessageType.system) {
       resolvedSource = MessageSource.system;
-    } else if (currentUserId != null && authorId == currentUserId) {
+    } else if (currentUserId != null && message.authorId == currentUserId) {
       resolvedSource = MessageSource.me;
     }
 
-    return ChatMessage(
-      id: json['id'] as String? ?? '',
-      roomId: json['room_id'] as String? ?? '',
-      authorId: authorId,
-      authorNick: json['author_nick'] as String? ?? '',
-      text: json['text'] as String? ?? '',
-      translation: json['translation'] != null
-          ? TranslationMessage.fromJson(
-              Map<String, dynamic>.from(json['translation'] as Map),
-            )
-          : null,
-      type: MessageTypeExtension.fromString(json['type'] as String? ?? 'text'),
-      status: MessageStatusExtension.fromString(
-        json['status'] as String? ?? 'sent',
-      ),
-      timestamp:
-          DateTime.tryParse(json['timestamp'] as String? ?? '') ??
-          DateTime.now(),
-      source: resolvedSource,
-    );
+    return message.copyWith(source: resolvedSource);
   }
 }

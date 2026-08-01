@@ -68,12 +68,28 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roomState = ref.watch(roomControllerProvider);
+    final roomAsync = ref.watch(roomControllerProvider);
 
-    if (roomState.isCheckingSession) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    return roomAsync.when(
+      data: (roomData) => _buildScaffold(context, isCheckingSession: false),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => Scaffold(
+        body: Center(
+          child: Text(
+            error.toString(),
+            style: const TextStyle(color: Colors.redAccent),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildScaffold(
+    BuildContext context, {
+    required bool isCheckingSession,
+  }) {
     final l10n = AppLocalizations.of(context)!;
 
     return GestureDetector(

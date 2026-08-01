@@ -6,34 +6,87 @@ import 'package:app/core/network/signaling_providers.dart';
 import 'package:app/core/storage/secure_storage_provider.dart';
 import 'package:app/features/session/data/session_storage.dart';
 import 'package:app/features/session/domain/chat_message.dart';
+import 'package:app/features/session/domain/message_status.dart';
+import 'package:app/features/session/domain/message_type.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'session_controller.g.dart';
+
+// --- 1. IZOLOWANY PROVIDER DLA CZATU I TŁUMACZEŃ ---
+
+@riverpod
+class SessionMessagesController extends _$SessionMessagesController {
+  @override
+  List<ChatMessage> build(String roomId) {
+    return const [];
+  }
+
+  /// Dodawanie wiadomości systemowej (np. dołączenie/opuszczenie pokoju)
+  void addSystemMessage(String text) {
+    final msg = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      roomId: roomId,
+      text: text,
+      type: MessageType.system,
+      status: MessageStatus.sent,
+      timestamp: DateTime.now(),
+      source: MessageSource.system,
+    );
+    state = [...state, msg];
+  }
+
+  /// Dodawanie własnej wysłanej wiadomości
+  void addMyMessage(String text, {String? authorId, String? authorNick}) {
+    final msg = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      roomId: roomId,
+      authorId: authorId ?? '',
+      authorNick: authorNick ?? '',
+      text: text,
+      type: MessageType.text,
+      status: MessageStatus.sent,
+      timestamp: DateTime.now(),
+      source: MessageSource.me,
+    );
+    state = [...state, msg];
+  }
+
+  /// Dodawanie wiadomości odebranej od innego uczestnika
+  void addPeerMessage(ChatMessage message) {
+    state = [...state, message.copyWith(source: MessageSource.other)];
+  }
+
+  /// Aktualizacja stanu wiadomości (np. zmiana statusu na delivered / read lub dodanie translation)
+  void updateMessage(ChatMessage updatedMessage) {
+    state = [
+      for (final msg in state)
+        if (msg.id == updatedMessage.id) updatedMessage else msg,
+    ];
+  }
+}
+
+// --- 2. PROVIDER SYGNAŁOWY I ZARZĄDZANIA SESJĄ ---
 
 class SessionState {
   final bool isMicEnabled;
   final SignalingState currentState;
   final String? peerId;
-  final List<ChatMessage> messages;
 
   const SessionState({
     this.isMicEnabled = true,
     this.currentState = SignalingState.disconnected,
     this.peerId,
-    this.messages = const [],
   });
 
   SessionState copyWith({
     bool? isMicEnabled,
     SignalingState? currentState,
     String? peerId,
-    List<ChatMessage>? messages,
   }) {
     return SessionState(
       isMicEnabled: isMicEnabled ?? this.isMicEnabled,
       currentState: currentState ?? this.currentState,
       peerId: peerId ?? this.peerId,
-      messages: messages ?? this.messages,
     );
   }
 }
@@ -46,10 +99,12 @@ class SessionController extends _$SessionController {
   @override
   SessionState build(String roomId) {
     _initSession(roomId);
+
     ref.onDispose(() {
       _stateSub?.cancel();
       _eventSub?.cancel();
     });
+
     return const SessionState();
   }
 
@@ -61,34 +116,28 @@ class SessionController extends _$SessionController {
     ref.read(webRtcServiceProvider);
 
     _stateSub = signaling.stateStream.listen((state) {
-      stateChange(state);
+      _updateSignalingState(state);
     });
 
     _eventSub = signaling.eventStream.listen((event) {
+      final messagesNotifier = ref.read(
+        sessionMessagesControllerProvider(roomId).notifier,
+      );
+
       if (event is PeerJoinedEvent) {
         state = state.copyWith(peerId: event.peerId);
-        addSystemMessage('Peer joined: ${event.peerId}');
+        messagesNotifier.addSystemMessage('Peer joined: ${event.peerId}');
       } else if (event is PeerLeftEvent) {
         state = state.copyWith(peerId: null);
-        addSystemMessage('Peer left the room');
+        messagesNotifier.addSystemMessage('Peer left the room');
       }
     });
 
     unawaited(signaling.connect(roomId));
   }
 
-  void stateChange(SignalingState newState) {
+  void _updateSignalingState(SignalingState newState) {
     state = state.copyWith(currentState: newState);
-  }
-
-  void addSystemMessage(String text) {
-    final msg = ChatMessage(
-      id: DateTime.now().toIso8601String(),
-      text: text,
-      source: MessageSource.system,
-      timestamp: DateTime.now(),
-    );
-    state = state.copyWith(messages: [...state.messages, msg]);
   }
 
   void toggleMicrophone() {
@@ -100,6 +149,7 @@ class SessionController extends _$SessionController {
   Future<void> leaveRoom() async {
     final storage = ref.read(secureStorageProvider);
     final signaling = ref.read(signalingClientProvider);
+
     await signaling.disconnect();
     await ref.read(webRtcServiceProvider).closeConnection();
     await clearActiveRoomId(storage);

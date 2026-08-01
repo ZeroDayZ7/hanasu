@@ -1,13 +1,17 @@
 import 'package:app/features/session/domain/chat_message.dart';
+import 'package:app/features/session/providers/session_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class ChatMessageList extends StatelessWidget {
-  final List<ChatMessage> messages;
+class ChatMessageList extends ConsumerWidget {
+  final String roomId;
 
-  const ChatMessageList({super.key, required this.messages});
+  const ChatMessageList({super.key, required this.roomId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messages = ref.watch(sessionMessagesControllerProvider(roomId));
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: messages.length,

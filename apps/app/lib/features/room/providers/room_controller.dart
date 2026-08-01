@@ -11,35 +11,16 @@ String generateNewRoomCode() => generateRoomCode();
 String createDefaultRoomName() => 'Room-${generateRoomCode()}';
 
 @immutable
-class RoomState {
-  final bool isLoading;
-  final bool isCheckingSession;
+class RoomData {
   final String activeRoomId;
   final List<ChatRoom> rooms;
-  final String? errorMessage;
 
-  const RoomState({
-    this.isLoading = true,
-    this.isCheckingSession = false,
-    this.activeRoomId = '',
-    this.rooms = const [],
-    this.errorMessage,
-  });
+  const RoomData({this.activeRoomId = '', this.rooms = const []});
 
-  RoomState copyWith({
-    bool? isLoading,
-    bool? isCheckingSession,
-    String? activeRoomId,
-    List<ChatRoom>? rooms,
-    String? errorMessage,
-    bool clearError = false,
-  }) {
-    return RoomState(
-      isLoading: isLoading ?? this.isLoading,
-      isCheckingSession: isCheckingSession ?? this.isCheckingSession,
+  RoomData copyWith({String? activeRoomId, List<ChatRoom>? rooms}) {
+    return RoomData(
       activeRoomId: activeRoomId ?? this.activeRoomId,
       rooms: rooms ?? this.rooms,
-      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }
@@ -47,67 +28,45 @@ class RoomState {
 @riverpod
 class RoomController extends _$RoomController {
   @override
-  RoomState build() {
-    Future.microtask(() => _loadRooms());
-    return const RoomState();
-  }
+  FutureOr<RoomData> build() async {
+    final storage = ref.read(secureStorageProvider);
 
-  Future<void> _loadRooms() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final storage = ref.read(secureStorageProvider);
+    final results = await Future.wait<dynamic>([
+      room_repo.getRooms(storage),
+      room_repo.fetchActiveRoomId(storage),
+    ]);
 
-      final results = await Future.wait<dynamic>([
-        room_repo.getRooms(storage),
-        room_repo.fetchActiveRoomId(storage),
-      ]);
-
-      state = state.copyWith(
-        isLoading: false,
-        rooms: results[0] as List<ChatRoom>,
-        activeRoomId: (results[1] as String?) ?? '',
-      );
-    } catch (error) {
-      state = state.copyWith(isLoading: false, errorMessage: error.toString());
-    }
+    return RoomData(
+      rooms: results[0] as List<ChatRoom>,
+      activeRoomId: (results[1] as String?) ?? '',
+    );
   }
 
   String generateNewRoomName() => createDefaultRoomName();
   String generateNewCode() => generateNewRoomCode();
 
   Future<ChatRoom> createRoom(String name, {String? description}) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final storage = ref.read(secureStorageProvider);
-      final room = await room_repo.createRoom(
-        storage,
-        name,
-        description: description,
-      );
+    final storage = ref.read(secureStorageProvider);
+    final room = await room_repo.createRoom(
+      storage,
+      name,
+      description: description,
+    );
 
-      state = state.copyWith(isLoading: false, rooms: [...state.rooms, room]);
-      return room;
-    } catch (error) {
-      state = state.copyWith(isLoading: false, errorMessage: error.toString());
-      rethrow;
-    }
+    state = AsyncValue.data(
+      state.requireValue.copyWith(rooms: [...state.requireValue.rooms, room]),
+    );
+    return room;
   }
 
   Future<void> saveRoom(String pin) async {
-    state = state.copyWith(isCheckingSession: true, clearError: true);
-    try {
-      await saveActiveRoom(pin);
-    } catch (error) {
-      state = state.copyWith(errorMessage: error.toString());
-    } finally {
-      state = state.copyWith(isCheckingSession: false);
-    }
+    await saveActiveRoom(pin);
   }
 
   Future<void> saveActiveRoom(String roomId) async {
     final storage = ref.read(secureStorageProvider);
     await room_repo.saveActiveRoom(storage, roomId);
-    state = state.copyWith(activeRoomId: roomId);
+    state = AsyncValue.data(state.requireValue.copyWith(activeRoomId: roomId));
   }
 
   Future<void> clearRoom() => clearActiveRoom();
@@ -115,21 +74,19 @@ class RoomController extends _$RoomController {
   Future<void> clearActiveRoom() async {
     final storage = ref.read(secureStorageProvider);
     await room_repo.clearActiveRoom(storage);
-    state = state.copyWith(activeRoomId: '');
+    state = AsyncValue.data(state.requireValue.copyWith(activeRoomId: ''));
   }
 
   Future<void> deleteRoom(String roomId) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final storage = ref.read(secureStorageProvider);
-      await room_repo.removeRoom(storage, roomId);
+    final storage = ref.read(secureStorageProvider);
+    await room_repo.removeRoom(storage, roomId);
 
-      state = state.copyWith(
-        isLoading: false,
-        rooms: state.rooms.where((room) => room.id != roomId).toList(),
-      );
-    } catch (error) {
-      state = state.copyWith(isLoading: false, errorMessage: error.toString());
-    }
+    state = AsyncValue.data(
+      state.requireValue.copyWith(
+        rooms: state.requireValue.rooms
+            .where((room) => room.id != roomId)
+            .toList(),
+      ),
+    );
   }
 }
