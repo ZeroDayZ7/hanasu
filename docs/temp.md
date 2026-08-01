@@ -4,9 +4,9 @@ Poniżej znajduje się rygorystyczny plan uporządkowania architektury i naprawy
 
 **Architektura i Podejście Funkcyjne**
 
-1. **Rozbicie klas serwisowych:** Wyodrębnij logikę negocjacji SDP (Offer/Answer) z `WebRtcService` do samodzielnych asynchronicznych funkcji (np. `export async function createSdpOffer(...)`), aby uniknąć przetrzymywania stanu w "boskim obiekcie".
+<!-- 1. **Rozbicie klas serwisowych:** Wyodrębnij logikę negocjacji SDP (Offer/Answer) z `WebRtcService` do samodzielnych asynchronicznych funkcji (np. `export async function createSdpOffer(...)`), aby uniknąć przetrzymywania stanu w "boskim obiekcie". -->
 
-2. **Czyste funkcje mapujące:** Przenieś deserializację WebSocketów (np. `_handleIncomingMessage`) do niezależnych, testowalnych funkcji, które przyjmują surowy `String` i zwracają szczelnie zdefiniowane typy `WebSocketEvent`.
+<!-- 2. **Czyste funkcje mapujące:** Przenieś deserializację WebSocketów (np. `_handleIncomingMessage`) do niezależnych, testowalnych funkcji, które przyjmują surowy `String` i zwracają szczelnie zdefiniowane typy `WebSocketEvent`. -->
 
 3. **Funkcyjne wstrzykiwanie zależności:** Zamiast przechowywać `AppLogger` i `SignalingClient` jako wewnętrzne pola klasy stanu, przekazuj je wyłącznie jako argumenty do czystych funkcji wykonawczych, zachowując kontroler Riverpod jedynie do zarządzania mutacją stanu.
 

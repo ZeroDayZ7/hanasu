@@ -1,10 +1,10 @@
-// lib/core/network/ws_signaling_client.dart
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:app/config/env_config.dart';
 import 'package:app/core/logger/app_logger.dart';
 import 'package:app/core/network/signaling_client.dart';
+import 'package:app/core/network/signaling_message_parser.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 final class WsSignalingClient implements SignalingClient {
@@ -48,7 +48,6 @@ final class WsSignalingClient implements SignalingClient {
       final uri = Uri.parse(urlString);
       _channel = WebSocketChannel.connect(uri);
 
-      // Oczekiwanie na gotowość gniazda
       await _channel!.ready;
 
       _isConnecting = false;
@@ -87,6 +86,24 @@ final class WsSignalingClient implements SignalingClient {
     }
   }
 
+  /// Zrefaktoryzowana obsługa przychodzących wiadomości z wykorzystaniem czystej funkcji parsera
+  void _handleIncomingMessage(dynamic raw) {
+    if (raw is! String) return;
+
+    _logger.t('Received raw message: $raw', module: 'WsSignaling');
+    final event = parseSignalingMessage(raw);
+
+    if (event != null) {
+      _logger.d('Parsed event: ${event.runtimeType}', module: 'WsSignaling');
+      _eventController.add(event);
+    } else {
+      _logger.w(
+        'Unknown or unparseable payload received: $raw',
+        module: 'WsSignaling',
+      );
+    }
+  }
+
   void _handleConnectionLoss() {
     _stateController.add(SignalingState.disconnected);
 
@@ -98,16 +115,10 @@ final class WsSignalingClient implements SignalingClient {
   void _startReconnectTimer() {
     if (_reconnectTimer?.isActive ?? false) return;
 
-    _logger.i(
-      'Starting auto-reconnect timer (retrying every 3s)...',
-      module: 'WsSignaling',
-    );
+    _logger.i('Starting auto-reconnect timer...', module: 'WsSignaling');
     _reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (_currentRoomId != null && !_isExplicitlyClosed && !_isConnecting) {
-        _logger.i(
-          'Attempting auto-reconnect to room: $_currentRoomId',
-          module: 'WsSignaling',
-        );
+        _logger.i('Attempting auto-reconnect...', module: 'WsSignaling');
         connect(_currentRoomId!);
       }
     });
@@ -128,106 +139,6 @@ final class WsSignalingClient implements SignalingClient {
     _channel = null;
   }
 
-  void _handleIncomingMessage(dynamic raw) {
-    try {
-      _logger.t('Received raw message: $raw', module: 'WsSignaling');
-      final map = jsonDecode(raw as String) as Map<String, dynamic>;
-      final type = map['type'] as String?;
-
-      switch (type) {
-        case 'peer_joined':
-          final payload = map['payload'] as Map<String, dynamic>?;
-          final peerId =
-              payload?['peer_id'] as String? ??
-              map['peer_id'] as String? ??
-              'unknown';
-          _logger.d('Event: Peer joined -> $peerId', module: 'WsSignaling');
-          _eventController.add(PeerJoinedEvent(peerId));
-          break;
-
-        case 'peer_left':
-          final payload = map['payload'] as Map<String, dynamic>?;
-          final peerId =
-              payload?['peer_id'] as String? ??
-              map['peer_id'] as String? ??
-              'unknown';
-          _logger.d('Event: Peer left -> $peerId', module: 'WsSignaling');
-          _eventController.add(PeerLeftEvent(peerId));
-          break;
-
-        case 'offer':
-          final senderId =
-              map['sender'] as String? ?? map['sender_id'] as String? ?? '';
-          final payload = map['payload'] as Map<String, dynamic>?;
-          final sdp = payload?['sdp'] as String? ?? map['sdp'] as String? ?? '';
-          _logger.d(
-            'Event: Offer received from -> $senderId',
-            module: 'WsSignaling',
-          );
-          _eventController.add(
-            OfferReceivedEvent(senderId: senderId, sdp: sdp),
-          );
-          break;
-
-        case 'answer':
-          final senderId =
-              map['sender'] as String? ?? map['sender_id'] as String? ?? '';
-          final payload = map['payload'] as Map<String, dynamic>?;
-          final sdp = payload?['sdp'] as String? ?? map['sdp'] as String? ?? '';
-          _logger.d(
-            'Event: Answer received from -> $senderId',
-            module: 'WsSignaling',
-          );
-          _eventController.add(
-            AnswerReceivedEvent(senderId: senderId, sdp: sdp),
-          );
-          break;
-
-        case 'candidate':
-          final senderId =
-              map['sender'] as String? ?? map['sender_id'] as String? ?? '';
-          final payload = map['payload'] as Map<String, dynamic>?;
-          final candidate =
-              payload?['candidate'] as String? ??
-              map['candidate'] as String? ??
-              '';
-          final sdpMid =
-              payload?['sdpMid'] as String? ?? map['sdpMid'] as String? ?? '';
-          final sdpMLineIndex =
-              payload?['sdpMLineIndex'] as int? ??
-              map['sdpMLineIndex'] as int? ??
-              0;
-
-          _logger.t(
-            'Event: ICE Candidate received from -> $senderId',
-            module: 'WsSignaling',
-          );
-          _eventController.add(
-            IceCandidateReceivedEvent(
-              senderId: senderId,
-              candidate: candidate,
-              sdpMid: sdpMid,
-              sdpMLineIndex: sdpMLineIndex,
-            ),
-          );
-          break;
-
-        default:
-          _logger.w(
-            'Unknown message type received: $type',
-            module: 'WsSignaling',
-          );
-      }
-    } catch (e, st) {
-      _logger.e(
-        'Failed to parse incoming WebSocket message',
-        module: 'WsSignaling',
-        error: e,
-        stackTrace: st,
-      );
-    }
-  }
-
   void _send(Map<String, dynamic> data) {
     try {
       final payload = jsonEncode(data);
@@ -245,7 +156,6 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   void sendOffer(String targetId, String sdp) {
-    _logger.d('Sending offer to -> $targetId', module: 'WsSignaling');
     _send({
       'type': 'offer',
       'target_id': targetId,
@@ -255,7 +165,6 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   void sendAnswer(String targetId, String sdp) {
-    _logger.d('Sending answer to -> $targetId', module: 'WsSignaling');
     _send({
       'type': 'answer',
       'target_id': targetId,
@@ -270,7 +179,6 @@ final class WsSignalingClient implements SignalingClient {
     String sdpMid,
     int sdpMLineIndex,
   ) {
-    _logger.t('Sending ICE candidate to -> $targetId', module: 'WsSignaling');
     _send({
       'type': 'candidate',
       'target_id': targetId,
@@ -284,10 +192,6 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   Future<void> disconnect() async {
-    _logger.i(
-      'Disconnecting WebSocket client explicitly',
-      module: 'WsSignaling',
-    );
     _isExplicitlyClosed = true;
     _stopReconnectTimer();
     await _cleanupConnection();
