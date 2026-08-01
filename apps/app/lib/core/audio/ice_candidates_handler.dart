@@ -1,61 +1,81 @@
+import 'dart:async';
+
 import 'package:app/core/logger/app_logger.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
-/// Dodaje kandydata ICE lub zakolejkowuje go, jeśli połączenie nie jest jeszcze gotowe
-Future<void> processOrQueueIceCandidate({
-  required RTCPeerConnection? peerConnection,
-  required RTCIceCandidate candidate,
-  required bool isRemoteDescriptionSet,
-  required List<RTCIceCandidate> pendingQueue,
-  required AppLogger logger,
-}) async {
-  if (peerConnection == null) return;
+/// Reaktywny zarządca buforowania i aplikowania kandydatów ICE.
+final class IceCandidateQueue {
+  final AppLogger _logger;
 
-  if (!isRemoteDescriptionSet) {
-    logger.d(
-      'Remote description not set. Queuing ICE candidate.',
-      module: 'WebRTC',
-    );
-    pendingQueue.add(candidate);
-    return;
+  final _candidateController = StreamController<RTCIceCandidate>.broadcast();
+  StreamSubscription<RTCIceCandidate>? _subscription;
+
+  final List<RTCIceCandidate> _pendingBuffer = [];
+  bool _isRemoteDescriptionSet = false;
+
+  IceCandidateQueue(this._logger);
+
+  /// Rejestruje przychodzący kandydat ICE – buforuje go lub od razu przekazuje do strumienia.
+  void addCandidate(RTCIceCandidate candidate) {
+    if (_isRemoteDescriptionSet) {
+      _candidateController.add(candidate);
+    } else {
+      _logger.d(
+        'Remote description not set yet. Queuing ICE candidate.',
+        module: 'ICE',
+      );
+      _pendingBuffer.add(candidate);
+    }
   }
 
-  try {
-    await peerConnection.addCandidate(candidate);
-    logger.t('Successfully added ICE candidate', module: 'WebRTC');
-  } catch (e, st) {
-    logger.e(
-      'Failed to add ICE candidate',
-      module: 'WebRTC',
-      error: e,
-      stackTrace: st,
-    );
+  /// Sygnalizuje, że SDP RemoteDescription został pomyślnie ustawiony.
+  /// Subskrybuje do strumienia i natychmiastowo wypluwa zbuforowane kandydaty.
+  void markRemoteDescriptionReady(RTCPeerConnection peerConnection) {
+    _isRemoteDescriptionSet = true;
+
+    // Nasłuchuj na przyszłe kandydaty ICE i aplikuj je od razu
+    _subscription ??= _candidateController.stream.listen((candidate) async {
+      await _addIceCandidateToPeer(peerConnection, candidate);
+    });
+
+    // Wypłucz dotychczas zbuforowane kandydaty z kolejki
+    if (_pendingBuffer.isNotEmpty) {
+      _logger.i(
+        'Flushing ${_pendingBuffer.length} pending ICE candidates.',
+        module: 'ICE',
+      );
+      final queued = List<RTCIceCandidate>.from(_pendingBuffer);
+      _pendingBuffer.clear();
+
+      for (final candidate in queued) {
+        _candidateController.add(candidate);
+      }
+    }
   }
-}
 
-/// Aplikuje zakolejkowanych kandydatów po ustawieniu RemoteDescription
-Future<void> flushPendingIceCandidates({
-  required RTCPeerConnection? peerConnection,
-  required List<RTCIceCandidate> pendingQueue,
-  required AppLogger logger,
-}) async {
-  if (pendingQueue.isEmpty || peerConnection == null) return;
-
-  logger.d(
-    'Processing ${pendingQueue.length} queued ICE candidates...',
-    module: 'WebRTC',
-  );
-  for (final candidate in List<RTCIceCandidate>.from(pendingQueue)) {
+  Future<void> _addIceCandidateToPeer(
+    RTCPeerConnection peerConnection,
+    RTCIceCandidate candidate,
+  ) async {
     try {
       await peerConnection.addCandidate(candidate);
+      _logger.t('Successfully applied ICE candidate.', module: 'ICE');
     } catch (e, st) {
-      logger.e(
-        'Failed to process queued ICE candidate',
-        module: 'WebRTC',
+      _logger.e(
+        'Failed to add ICE candidate',
+        module: 'ICE',
         error: e,
         stackTrace: st,
       );
     }
   }
-  pendingQueue.clear();
+
+  /// Czyści stan kolejki i zamyka subskrypcję.
+  Future<void> dispose() async {
+    await _subscription?.cancel();
+    _subscription = null;
+    _pendingBuffer.clear();
+    _isRemoteDescriptionSet = false;
+    await _candidateController.close();
+  }
 }

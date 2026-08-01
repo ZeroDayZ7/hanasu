@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:app/config/env_config.dart';
 import 'package:app/core/logger/app_logger.dart';
@@ -17,8 +18,14 @@ final class WsSignalingClient implements SignalingClient {
 
   String? _currentRoomId;
   Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
   bool _isConnecting = false;
   bool _isExplicitlyClosed = false;
+
+  // Konfiguracja Exponential Backoff
+  static const Duration _initialDelay = Duration(seconds: 1);
+  static const Duration _maxDelay = Duration(seconds: 30);
+  static const double _backoffFactor = 1.5;
 
   WsSignalingClient(this._logger);
 
@@ -86,7 +93,6 @@ final class WsSignalingClient implements SignalingClient {
     }
   }
 
-  /// Zrefaktoryzowana obsługa przychodzących wiadomości z wykorzystaniem czystej funkcji parsera
   void _handleIncomingMessage(dynamic raw) {
     if (raw is! String) return;
 
@@ -115,18 +121,43 @@ final class WsSignalingClient implements SignalingClient {
   void _startReconnectTimer() {
     if (_reconnectTimer?.isActive ?? false) return;
 
-    _logger.i('Starting auto-reconnect timer...', module: 'WsSignaling');
-    _reconnectTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    final delay = _calculateBackoffDelay();
+    _logger.i(
+      'Scheduling reconnect attempt #${_reconnectAttempts + 1} in ${delay.inMilliseconds}ms',
+      module: 'WsSignaling',
+    );
+
+    _reconnectTimer = Timer(delay, () {
       if (_currentRoomId != null && !_isExplicitlyClosed && !_isConnecting) {
-        _logger.i('Attempting auto-reconnect...', module: 'WsSignaling');
+        _reconnectAttempts++;
+        _logger.i(
+          'Attempting auto-reconnect (attempt #$_reconnectAttempts)...',
+          module: 'WsSignaling',
+        );
         connect(_currentRoomId!);
       }
     });
   }
 
+  Duration _calculateBackoffDelay() {
+    final calculatedMs =
+        _initialDelay.inMilliseconds * pow(_backoffFactor, _reconnectAttempts);
+    final cappedMs = min(
+      calculatedMs.toDouble(),
+      _maxDelay.inMilliseconds.toDouble(),
+    );
+
+    // Jitter: dodajemy losowy szum (0-25%), aby zapobiec jednoczesnym strzałom wielu klientów
+    final random = Random();
+    final jitter = cappedMs * 0.25 * random.nextDouble();
+
+    return Duration(milliseconds: (cappedMs + jitter).toInt());
+  }
+
   void _stopReconnectTimer() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
+    _reconnectAttempts = 0;
   }
 
   Future<void> _cleanupConnection() async {

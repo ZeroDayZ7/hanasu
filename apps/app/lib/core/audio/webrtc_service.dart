@@ -20,8 +20,8 @@ final class WebRtcService {
   Timer? _statsTimer;
   String? _targetPeerId;
 
-  final List<RTCIceCandidate> _pendingIceCandidates = [];
-  bool _isRemoteDescriptionSet = false;
+  // Izolowana, reaktywna kolejka dla kandydatów ICE
+  IceCandidateQueue? _iceQueue;
 
   WebRtcService(this._logger, this._signalingClient);
 
@@ -73,12 +73,9 @@ final class WebRtcService {
             :final sdpMid,
             :final sdpMLineIndex,
           ):
-            await processOrQueueIceCandidate(
-              peerConnection: _peerConnection,
-              candidate: RTCIceCandidate(candidate, sdpMid, sdpMLineIndex),
-              isRemoteDescriptionSet: _isRemoteDescriptionSet,
-              pendingQueue: _pendingIceCandidates,
-              logger: _logger,
+            // Zamiast mutowania tablicy, przekazujemy do izolowanej kolejki
+            _iceQueue?.addCandidate(
+              RTCIceCandidate(candidate, sdpMid, sdpMLineIndex),
             );
             break;
 
@@ -96,13 +93,11 @@ final class WebRtcService {
     });
   }
 
-  /// Wytyczna 12: Mute vs Disable track. Wyciszanie polega na modyfikacji `enabled = false`
-  /// bez zerwania połączenia P2P i zamykania strumieni RTP.
   void setMicrophoneMuted(bool muted) {
     if (_localStream == null) return;
 
     for (final track in _localStream!.getAudioTracks()) {
-      track.enabled = !muted; // Utrzymuje RTP P2P przy życiu!
+      track.enabled = !muted;
     }
     _logger.i('Local audio track state: enabled = ${!muted}', module: 'WebRTC');
   }
@@ -112,8 +107,10 @@ final class WebRtcService {
 
     final pc = await createPeerConnection(WebRtcConfig.rtcConfiguration);
     _peerConnection = pc;
-    _isRemoteDescriptionSet = false;
-    _pendingIceCandidates.clear();
+
+    // Reset kolejki dla nowego połączenia P2P
+    await _iceQueue?.dispose();
+    _iceQueue = IceCandidateQueue(_logger);
 
     _setupPeerConnectionListeners(pc);
     await _attachLocalAudioStream(pc);
@@ -131,12 +128,9 @@ final class WebRtcService {
   }
 
   Future<void> _onRemoteDescriptionSet() async {
-    _isRemoteDescriptionSet = true;
-    await flushPendingIceCandidates(
-      peerConnection: _peerConnection,
-      pendingQueue: _pendingIceCandidates,
-      logger: _logger,
-    );
+    if (_peerConnection != null) {
+      _iceQueue?.markRemoteDescriptionReady(_peerConnection!);
+    }
   }
 
   Future<void> _attachLocalAudioStream(RTCPeerConnection pc) async {
@@ -202,8 +196,8 @@ final class WebRtcService {
     await _eventSubscription?.cancel();
     _eventSubscription = null;
 
-    _pendingIceCandidates.clear();
-    _isRemoteDescriptionSet = false;
+    await _iceQueue?.dispose();
+    _iceQueue = null;
 
     _localStream?.getTracks().forEach((t) => t.stop());
     await _localStream?.dispose();
