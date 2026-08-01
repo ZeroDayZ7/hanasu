@@ -46,7 +46,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   @override
   void dispose() {
-    _remoteRenderer.dispose();
+    if (_isRendererInitialized) {
+      _remoteRenderer.dispose().catchError((_) {});
+    }
     super.dispose();
   }
 
