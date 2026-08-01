@@ -29,23 +29,10 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
     FocusScope.of(context).unfocus();
     final controller = ref.read(roomControllerProvider.notifier);
     final room = await controller.createRoom(name);
-    await controller.saveActiveRoom(room.id);
+    _roomNameController.clear();
 
     if (!mounted) return;
-    _navigateToSession(room.id);
-  }
-
-  void _navigateToSession(String roomId) {
-    // Deklaratywne wejście na ścieżkę session za pomocą go_router.
-    // Metoda push zwraca Future, który rozwiązuje się po wyjściu z ekranu (pop).
-    context.push('/session/$roomId').then((_) async {
-      await ref.read(roomControllerProvider.notifier).clearActiveRoom();
-      if (mounted) {
-        setState(() {
-          _roomNameController.clear();
-        });
-      }
-    });
+    context.push('/session/${room.id}');
   }
 
   Widget _buildRoomTile(ChatRoom room) {
@@ -57,10 +44,7 @@ class _RoomListScreenState extends ConsumerState<RoomListScreen> {
         subtitle: Text(room.description ?? 'ID: ${room.id}'),
         trailing: IconButton(
           icon: const Icon(Icons.arrow_forward),
-          onPressed: () {
-            ref.read(roomControllerProvider.notifier).saveActiveRoom(room.id);
-            _navigateToSession(room.id);
-          },
+          onPressed: () => context.push('/session/${room.id}'),
         ),
       ),
     );

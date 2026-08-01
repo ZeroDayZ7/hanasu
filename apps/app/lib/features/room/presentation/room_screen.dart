@@ -56,7 +56,6 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
   }
 
   void _navigateToSession(String roomId) {
-    // Używamy bezpiecznej nawigacji za pomocą go_router
     context.push('/session/$roomId').then((_) async {
       await ref.read(roomControllerProvider.notifier).clearRoom();
       if (mounted) {
@@ -69,14 +68,6 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Reagujemy na zmianę aktywnego pokoju w sposób reaktywny i jednorazowy
-    ref.listen(roomControllerProvider, (previous, next) {
-      if (next.activeRoomId.isNotEmpty &&
-          previous?.activeRoomId != next.activeRoomId) {
-        _navigateToSession(next.activeRoomId);
-      }
-    });
-
     final roomState = ref.watch(roomControllerProvider);
 
     if (roomState.isCheckingSession) {

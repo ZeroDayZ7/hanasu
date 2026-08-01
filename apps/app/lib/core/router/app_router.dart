@@ -1,3 +1,5 @@
+import 'package:app/core/logger/app_router_observer.dart';
+import 'package:app/core/logger/logger_provider.dart';
 import 'package:app/features/room/presentation/room_screen.dart';
 import 'package:app/features/session/presentation/session_screen.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +10,12 @@ part 'app_router.g.dart';
 
 @riverpod
 GoRouter router(Ref ref) {
+  final logger = ref.watch(appLoggerProvider);
+
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: true,
+    observers: [AppRouterObserver(logger)],
     routes: [
       GoRoute(
         path: '/',
