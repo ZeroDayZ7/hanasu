@@ -8,29 +8,41 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
 
+@TypedGoRoute<RoomRoute>(
+  path: '/',
+  routes: <TypedGoRoute<GoRouteData>>[
+    TypedGoRoute<SessionRoute>(path: 'session/:roomId'),
+  ],
+)
+class RoomRoute extends GoRouteData with $RoomRoute {
+  const RoomRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const RoomScreen();
+  }
+}
+
+class SessionRoute extends GoRouteData with $SessionRoute {
+  const SessionRoute({required this.roomId});
+
+  final String roomId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return SessionScreen(roomId: roomId);
+  }
+}
+
 @riverpod
 GoRouter router(Ref ref) {
   final logger = ref.watch(appLoggerProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: const RoomRoute().location,
     debugLogDiagnostics: true,
     observers: [AppRouterObserver(logger)],
-    routes: [
-      GoRoute(
-        path: '/',
-        name: 'rooms',
-        builder: (context, state) => const RoomScreen(),
-      ),
-      GoRoute(
-        path: '/session/:roomId',
-        name: 'session',
-        builder: (context, state) {
-          final roomId = state.pathParameters['roomId'] ?? '';
-          return SessionScreen(roomId: roomId);
-        },
-      ),
-    ],
+    routes: $appRoutes,
     errorBuilder: (context, state) => Scaffold(
       body: Center(child: Text('404 - Nie znaleziono strony: ${state.error}')),
     ),

@@ -46,6 +46,7 @@ dev_dependencies:
   freezed: ^3.2.3
   json_serializable: ^6.11.2
   flutter_lints: ^6.0.0
+  go_router_builder: ^4.4.0
 
 dependency_overrides:
   path_provider_foundation: 2.5.1

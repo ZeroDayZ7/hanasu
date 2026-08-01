@@ -30,12 +30,20 @@
       "showLog": false
     },
     {
-      "name": "Flutter Build & Install Android",
+      "name": "Flutter Android (USB)",
       "request": "launch",
       "type": "dart",
       "cwd": "${workspaceFolder}/apps/app",
       "program": "lib/main.dart",
       "deviceId": "5200d78bfa479449"
+    },
+    {
+      "name": "Flutter Android (Tailscale WiFi)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/app",
+      "program": "lib/main.dart",
+      "deviceId": "100.87.236.2:5555"
     },
     {
       "name": "Flutter on Windows",

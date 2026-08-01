@@ -3,6 +3,69 @@
 part of 'app_router.dart';
 
 // **************************************************************************
+// GoRouterGenerator
+// **************************************************************************
+
+List<RouteBase> get $appRoutes => [$roomRoute];
+
+RouteBase get $roomRoute => GoRouteData.$route(
+  path: '/',
+  hasOverriddenOnExit: false,
+  factory: $RoomRoute._fromState,
+  routes: [
+    GoRouteData.$route(
+      path: 'session/:roomId',
+      hasOverriddenOnExit: false,
+      factory: $SessionRoute._fromState,
+    ),
+  ],
+);
+
+mixin $RoomRoute on GoRouteData {
+  static RoomRoute _fromState(GoRouterState state) => const RoomRoute();
+
+  @override
+  String get location => GoRouteData.$location('/');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $SessionRoute on GoRouteData {
+  static SessionRoute _fromState(GoRouterState state) =>
+      SessionRoute(roomId: state.pathParameters['roomId']!);
+
+  SessionRoute get _self => this as SessionRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/session/${Uri.encodeComponent(_self.roomId)}');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+// **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
@@ -48,4 +111,4 @@ final class RouterProvider
   }
 }
 
-String _$routerHash() => r'dadaa34c7a8de3973ad3bf78dbcec6dc567e96f0';
+String _$routerHash() => r'3471479579d55f35e41957bc0331f00b3786c19c';

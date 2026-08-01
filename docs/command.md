@@ -4,6 +4,11 @@ go run cmd/server/main.go
 
 adb -s 5200d78bfa479449 reverse tcp:8080 tcp:8080
 
+# ABD WIFI
+
+adb -s 5200d78bfa479449 tcpip 5555
+adb connect 100.87.236.2:5555
+
 adb devices
 
 5200d78bfa479449 device 17
