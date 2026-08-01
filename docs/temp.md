@@ -16,15 +16,15 @@ Poniżej znajduje się rygorystyczny plan uporządkowania architektury i naprawy
 
 5. **Eliminacja efektów ubocznych w interfejsie:** Zastosuj wzorzec Event/Action w kontrolerach. Interfejs użytkownika nie powinien wołać bezpośrednio repozytoriów ani samodzielnie czyścić stosu wywołań.
 
-<!-- 6. **Rozdzielenie providerów:** Podziel `sessionControllerProvider` na mniejsze fragmenty (np. osobny provider dla stanu czatu, osobny dla strumienia audio), aby uniknąć przebudowywania całego ekranu czatu przy każdej nowej wiadomości. -->
+<!-- 6. **Rozdzielenie providerów:** Podziel `sessionControllerProvider` na mniejsze fragmenty (np. osobny provider dla stanu czatu, osobny dla strumienia audio), aby uniknąć przebudowywania całego ekranu czatu przy każdej nowej wiadomości.
 
 **Nawigacja (GoRouter)**
 
-7. **Wdrożenie deklaratywnego routingu:** Zainstaluj i skonfiguruj `go_router`. Użyj ścieżek opartych na URI (np. `/room/:id`), co automatycznie rozwiąże problem ze stosem (używając `context.go` zamiast `Navigator.push`).
+<!-- 7. **Wdrożenie deklaratywnego routingu:** Zainstaluj i skonfiguruj `go_router`. Użyj ścieżek opartych na URI (np. `/room/:id`), co automatycznie rozwiąże problem ze stosem (używając `context.go` zamiast `Navigator.push`). -->
 
-8. **Deep Linking:** Dzięki `go_router` bez problemu zaimplementujesz wchodzenie do pokojów za pomocą linków webowych dzielonych ze znajomymi (np. aplikacja przechwytuje URL i parsuje PIN).
+<!-- 8. **Deep Linking:** Dzięki `go_router` bez problemu zaimplementujesz wchodzenie do pokojów za pomocą linków webowych dzielonych ze znajomymi (np. aplikacja przechwytuje URL i parsuje PIN). --> -->
 
-**WebRTC i optymalizacja zasobów**
+<!-- **WebRTC i optymalizacja zasobów** -->
 
 9. **Polityka cyklu życia streamu:** Zaimplementuj ścisłe ubijanie (`dispose`) dla `MediaStreamTrack` bezpośrednio przy opuszczaniu pokoju. Zapobiegnie to pozostawieniu włączonej diody mikrofonu w systemie operacyjnym.
 
