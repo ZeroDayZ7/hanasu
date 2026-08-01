@@ -1,11 +1,11 @@
 import 'package:app/core/locale/language_selector_widget.dart';
+import 'package:app/core/services/clipboard_service_provider.dart';
 import 'package:app/features/room/presentation/widgets/room_action_buttons.dart';
 import 'package:app/features/room/presentation/widgets/room_header_icon.dart';
 import 'package:app/features/room/presentation/widgets/room_input_field.dart';
 import 'package:app/features/room/providers/room_controller.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,13 +35,14 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
 
   void _copyToClipboard(String code) {
     if (code.isEmpty) return;
-    Clipboard.setData(ClipboardData(text: code));
-    final l10n = AppLocalizations.of(context)!;
 
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.codeCopiedSnackBar(code))));
+    final l10n = AppLocalizations.of(context)!;
+    final clipboardService = ref.read(clipboardServiceProvider);
+
+    clipboardService.copyToClipboard(
+      code,
+      message: l10n.codeCopiedSnackBar(code),
+    );
   }
 
   Future<void> _joinRoom() async {

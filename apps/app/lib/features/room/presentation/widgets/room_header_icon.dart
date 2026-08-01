@@ -1,3 +1,4 @@
+import 'package:app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class RoomHeaderIcon extends StatelessWidget {
@@ -5,6 +6,6 @@ class RoomHeaderIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(Icons.graphic_eq, size: 80, color: Color(0xFF6366F1));
+    return Icon(Icons.graphic_eq, size: 80, color: context.colors.primary);
   }
 }

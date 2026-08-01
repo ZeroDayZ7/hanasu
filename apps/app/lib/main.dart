@@ -6,6 +6,7 @@ import 'package:app/core/logger/app_logger.dart';
 import 'package:app/core/logger/app_provider_observer.dart';
 import 'package:app/core/logger/logger_provider.dart';
 import 'package:app/core/router/app_router.dart';
+import 'package:app/core/services/clipboard_service_provider.dart';
 import 'package:app/core/theme/app_theme.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
@@ -105,6 +106,7 @@ class HanasuApp extends ConsumerWidget {
     final logger = ref.watch(appLoggerProvider);
     final localeAsync = ref.watch(appLocaleProvider);
     final router = ref.watch(routerProvider);
+    final scaffoldMessengerKey = ref.watch(scaffoldMessengerKeyProvider);
 
     logger.d(
       'Building HanasuApp widget (locale state: ${localeAsync.value?.languageCode ?? "loading..."})',
@@ -112,6 +114,7 @@ class HanasuApp extends ConsumerWidget {
     );
 
     return MaterialApp.router(
+      scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'Hanasu',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,

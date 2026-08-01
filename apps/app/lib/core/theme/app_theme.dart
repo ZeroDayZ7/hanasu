@@ -1,39 +1,43 @@
+import 'package:app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
   static ThemeData get darkTheme {
+    const colors = AppColors.dark;
+
     return ThemeData.dark().copyWith(
-      scaffoldBackgroundColor: const Color(0xFF0F172A),
-      colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF6366F1),
-        secondary: Color(0xFF10B981),
-        surface: Color(0xFF1E293B),
-        error: Color(0xFFEF4444),
+      scaffoldBackgroundColor: colors.scaffoldBackground,
+      extensions: const <ThemeExtension<dynamic>>[colors],
+      colorScheme: ColorScheme.dark(
+        primary: colors.primary,
+        secondary: colors.secondary,
+        surface: colors.surfaceContainer,
+        error: colors.error,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF0F172A),
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.scaffoldBackground,
         elevation: 0,
         centerTitle: true,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1E293B),
+        fillColor: colors.surfaceContainer,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF334155)),
+          borderSide: BorderSide(color: colors.inputBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+          borderSide: BorderSide(color: colors.primary, width: 2),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: colors.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: RoundedRectangleBorder(

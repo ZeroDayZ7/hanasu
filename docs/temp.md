@@ -5,7 +5,9 @@ Poniżej znajduje się rygorystyczny plan uporządkowania architektury i naprawy
 **Architektura i Podejście Funkcyjne**
 
 1. **Rozbicie klas serwisowych:** Wyodrębnij logikę negocjacji SDP (Offer/Answer) z `WebRtcService` do samodzielnych asynchronicznych funkcji (np. `export async function createSdpOffer(...)`), aby uniknąć przetrzymywania stanu w "boskim obiekcie".
+
 2. **Czyste funkcje mapujące:** Przenieś deserializację WebSocketów (np. `_handleIncomingMessage`) do niezależnych, testowalnych funkcji, które przyjmują surowy `String` i zwracają szczelnie zdefiniowane typy `WebSocketEvent`.
+
 3. **Funkcyjne wstrzykiwanie zależności:** Zamiast przechowywać `AppLogger` i `SignalingClient` jako wewnętrzne pola klasy stanu, przekazuj je wyłącznie jako argumenty do czystych funkcji wykonawczych, zachowując kontroler Riverpod jedynie do zarządzania mutacją stanu.
 
 **Zarządzanie stanem i Riverpod**
@@ -40,9 +42,16 @@ Poniżej znajduje się rygorystyczny plan uporządkowania architektury i naprawy
 
 15. **Walidacja schematów:** Zanim strumień z gniazda przetworzy payload z czatu, przepuść go przez warstwę walidacyjną (np. sprawdzającą kompletność kluczy id, author_id), żeby zapobiec rzucaniu błędami na poziomie UI.
 
-**Inżynieria UI/UX** 16. **Debouncing akcji dołączenia:** Dodaj mechanizm zabezpieczający (debounce) na przyciski łączące do pokoju, aby podwójne szybkie tapnięcie w ekran nie wysyłało dwóch pakietów inicjujących (co obecnie generuje błąd podwójnego połączenia do bazy / RTC). 17. **Abstrakcja schowka:** Wyrzuć logikę `ClipboardData` z interfejsu (widgetu) do niezależnego serwisu wstrzykiwanego przez Riverpod. Interfejs powinien jedynie wywołać funkcję, a serwis obsłużyć schowek i wyemitować powiadomienie (SnackBar) z użyciem globalnego klucza `ScaffoldMessengerKey`. 18. **Ujednolicenie palety kolorów:** Wydziel tokeny kolorów (np. `Color(0xFF6366F1)`) bezpośrednio do niestandardowego motywu bazowego `ThemeExtension`, aby móc nimi dynamicznie sterować i nie twardo kodować wartości HEX w widgetach.
+**Inżynieria UI/UX** 16. **Debouncing akcji dołączenia:** Dodaj mechanizm zabezpieczający (debounce) na przyciski łączące do pokoju, aby podwójne szybkie tapnięcie w ekran nie wysyłało dwóch pakietów inicjujących (co obecnie generuje błąd podwójnego połączenia do bazy / RTC).
 
-**Błędy Domeny (Naprawa pozostałych ostrzeżeń LSP)** 19. **Domena ChatMessage:** W pliku `chat_message.dart` musisz zdefiniować enum `MessageSource` (np. `user`, `system`, `remote`) oraz dodać pole `source` i `translatedText` do konstruktora, by naprawić zgłoszone błędy z `chat_message_list.dart`. 20. **Definicja SessionController:** W widoku sesji wywołujesz konstruktor dostarczając same argumenty (np. `SessionController(roomId: ..., authorId: ..., authorNick: ...)`), ale plik ten jest źle skonfigurowany pod kątem Riverpod – musisz ujednolicić sygnaturę metody `build()` w generatorze kodu (np. `@riverpod class SessionController extends _$SessionController`).
+<!--
+17. **Abstrakcja schowka:** Wyrzuć logikę `ClipboardData` z interfejsu (widgetu) do niezależnego serwisu wstrzykiwanego przez Riverpod. Interfejs powinien jedynie wywołać funkcję, a serwis obsłużyć schowek i wyemitować powiadomienie (SnackBar) z użyciem globalnego klucza `ScaffoldMessengerKey`. -->
+
+18. **Ujednolicenie palety kolorów:** Wydziel tokeny kolorów (np. `Color(0xFF6366F1)`) bezpośrednio do niestandardowego motywu bazowego `ThemeExtension`, aby móc nimi dynamicznie sterować i nie twardo kodować wartości HEX w widgetach.
+
+**Błędy Domeny (Naprawa pozostałych ostrzeżeń LSP)** 19. **Domena ChatMessage:** W pliku `chat_message.dart` musisz zdefiniować enum `MessageSource` (np. `user`, `system`, `remote`) oraz dodać pole `source` i `translatedText` do konstruktora, by naprawić zgłoszone błędy z `chat_message_list.dart`.
+
+20. **Definicja SessionController:** W widoku sesji wywołujesz konstruktor dostarczając same argumenty (np. `SessionController(roomId: ..., authorId: ..., authorNick: ...)`), ale plik ten jest źle skonfigurowany pod kątem Riverpod – musisz ujednolicić sygnaturę metody `build()` w generatorze kodu (np. `@riverpod class SessionController extends _$SessionController`).
 
 ---
 
