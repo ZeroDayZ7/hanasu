@@ -41,9 +41,9 @@ final class WebRtcService {
   final Map<String, dynamic> _mediaConstraints = {
     'audio': {
       'mandatory': {
-        'echoCancellation': 'true',
-        'noiseSuppression': 'true',
-        'autoGainControl': 'true',
+        'echoCancellation': true,
+        'noiseSuppression': true,
+        'autoGainControl': true,
       },
       'optional': [],
     },
@@ -254,7 +254,7 @@ final class WebRtcService {
       if (event.track.kind == 'audio') {
         event.track.enabled = true;
 
-        Helper.setSpeakerphoneOn(true);
+        // Helper.setSpeakerphoneOn(true);
 
         _logger.i(
           '[Remote Audio Track] Configured. Enabled: ${event.track.enabled}, Muted: ${event.track.muted}',

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app/core/audio/audio_providers.dart';
 import 'package:app/core/network/signaling_client.dart';
 import 'package:app/core/network/signaling_providers.dart';
+import 'package:app/core/storage/secure_storage_provider.dart';
 import 'package:app/features/session/data/session_storage.dart';
 import 'package:app/features/session/domain/chat_message.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -53,13 +54,13 @@ class SessionController extends _$SessionController {
   }
 
   Future<void> _initSession(String roomId) async {
-    await saveActiveRoomId(roomId);
+    final storage = ref.read(secureStorageProvider);
+    await saveActiveRoomId(storage, roomId);
 
     final signaling = ref.read(signalingClientProvider);
     ref.read(webRtcServiceProvider);
 
     _stateSub = signaling.stateStream.listen((state) {
-      state = state;
       stateChange(state);
     });
 
@@ -97,9 +98,10 @@ class SessionController extends _$SessionController {
   }
 
   Future<void> leaveRoom() async {
+    final storage = ref.read(secureStorageProvider);
     final signaling = ref.read(signalingClientProvider);
     await signaling.disconnect();
     await ref.read(webRtcServiceProvider).closeConnection();
-    await clearActiveRoomId();
+    await clearActiveRoomId(storage);
   }
 }

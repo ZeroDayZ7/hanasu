@@ -41,7 +41,7 @@ final class RoomControllerProvider
   }
 }
 
-String _$roomControllerHash() => r'd69968f21771c4bfb3d2321912f91c78959c5260';
+String _$roomControllerHash() => r'5837c75eac501ff6c748185278ce2e1c0da849e1';
 
 abstract class _$RoomController extends $Notifier<RoomState> {
   RoomState build();

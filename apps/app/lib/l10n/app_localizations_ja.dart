@@ -12,10 +12,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'HANASU :: P2P VOICE';
 
   @override
-  String get roomInputHint => '例: xyz15';
+  String get roomInputHint => '例：xyz15';
 
   @override
-  String get roomInputSubtitle => 'ルームコードを入力するか、新規生成してください';
+  String get roomInputSubtitle => 'ルームコードを入力するか、新しいコードを生成してください';
 
   @override
   String get connectButton => '接続';
@@ -37,10 +37,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get micEnabled => 'マイク：オン';
+  String get micEnabled => 'マイク: オン';
 
   @override
-  String get micMuted => 'マイク：ミュート';
+  String get micMuted => 'マイク: ミュート';
 
   @override
   String roomTitle(String roomId) {
@@ -49,14 +49,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String peerJoined(String peerId) {
-    return 'ピア $peerId が参加しました';
+    return 'ユーザー $peerId が参加しました';
   }
 
   @override
-  String get peerLeft => 'ピアが退出しました';
+  String get peerLeft => 'ユーザーが退出しました';
 
   @override
-  String get statusDisconnected => '切断済み';
+  String get statusDisconnected => '切断されました';
 
   @override
   String get statusConnecting => 'サーバーに接続中...';
@@ -67,8 +67,29 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get statusWaitingForPeer => '相手の接続を待機中...';
+  String get statusWaitingForPeer => '相手の参加を待っています...';
 
   @override
   String get statusError => '接続エラー！';
+
+  @override
+  String get createRoomLabel => 'ルーム名';
+
+  @override
+  String get createRoomHint => '新しいルームの名前を入力してください';
+
+  @override
+  String get noRoomsMessage => 'ルームがまだありません。作成して会話を開始しましょう。';
+
+  @override
+  String get joinRoomLabel => 'ルームコード';
+
+  @override
+  String get joinRoomHint => '既存のルームコードを入力してください';
+
+  @override
+  String get profileNickLabel => 'ニックネーム';
+
+  @override
+  String get profileNickHint => '表示名を入力してください';
 }

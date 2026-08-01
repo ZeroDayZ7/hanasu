@@ -3,11 +3,11 @@ import 'package:app/features/room/presentation/widgets/room_action_buttons.dart'
 import 'package:app/features/room/presentation/widgets/room_header_icon.dart';
 import 'package:app/features/room/presentation/widgets/room_input_field.dart';
 import 'package:app/features/room/providers/room_controller.dart';
-import 'package:app/features/session/presentation/session_screen.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class RoomScreen extends ConsumerStatefulWidget {
   const RoomScreen({super.key});
@@ -56,34 +56,30 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
   }
 
   void _navigateToSession(String roomId) {
-    Navigator.of(context)
-        .push(
-          MaterialPageRoute<void>(
-            builder: (context) => SessionScreen(roomId: roomId),
-          ),
-        )
-        .then((_) async {
-          await ref.read(roomControllerProvider.notifier).clearRoom();
-          if (mounted) {
-            setState(() {
-              _pinController.clear();
-            });
-          }
+    // Używamy bezpiecznej nawigacji za pomocą go_router
+    context.push('/session/$roomId').then((_) async {
+      await ref.read(roomControllerProvider.notifier).clearRoom();
+      if (mounted) {
+        setState(() {
+          _pinController.clear();
         });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Reagujemy na zmianę aktywnego pokoju w sposób reaktywny i jednorazowy
+    ref.listen(roomControllerProvider, (previous, next) {
+      if (next.activeRoomId.isNotEmpty &&
+          previous?.activeRoomId != next.activeRoomId) {
+        _navigateToSession(next.activeRoomId);
+      }
+    });
+
     final roomState = ref.watch(roomControllerProvider);
 
     if (roomState.isCheckingSession) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    if (roomState.activeRoomId.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _navigateToSession(roomState.activeRoomId);
-      });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 

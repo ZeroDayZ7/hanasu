@@ -11,6 +11,7 @@ import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:go_router/go_router.dart';
 
 class SessionScreen extends ConsumerStatefulWidget {
   final String roomId;
@@ -23,6 +24,7 @@ class SessionScreen extends ConsumerStatefulWidget {
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
   late final RTCVideoRenderer _remoteRenderer;
+  bool _isRendererInitialized = false;
 
   @override
   void initState() {
@@ -33,8 +35,13 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
 
   Future<void> _initRenderer() async {
     await _remoteRenderer.initialize();
+    if (!mounted) return;
+
     final webRtcService = ref.read(webRtcServiceProvider);
-    _remoteRenderer.srcObject = webRtcService.remoteStream;
+    setState(() {
+      _remoteRenderer.srcObject = webRtcService.remoteStream;
+      _isRendererInitialized = true;
+    });
   }
 
   @override
@@ -72,10 +79,20 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final sessionState = ref.watch(sessionControllerProvider(widget.roomId));
-    final controller = ref.read(
-      sessionControllerProvider(widget.roomId).notifier,
-    );
+    final sessionProvider = sessionControllerProvider(widget.roomId);
+
+    // Automatyczne wyjście z ekranu w przypadku rozłączenia sesji przez serwer/peera
+    ref.listen(sessionProvider, (previous, next) {
+      if (next.currentState == SignalingState.disconnected &&
+          previous?.currentState != SignalingState.disconnected) {
+        if (context.mounted && context.canPop()) {
+          context.pop();
+        }
+      }
+    });
+
+    final sessionState = ref.watch(sessionProvider);
+    final controller = ref.read(sessionProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -85,14 +102,17 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             onPressed: () async {
               await controller.leaveRoom();
-              if (context.mounted) Navigator.of(context).pop();
+              if (context.mounted && context.canPop()) {
+                context.pop();
+              }
             },
           ),
         ],
       ),
       body: Stack(
         children: [
-          WindowsAudioRenderer(remoteRenderer: _remoteRenderer),
+          if (_isRendererInitialized)
+            WindowsAudioRenderer(remoteRenderer: _remoteRenderer),
           Column(
             children: [
               SessionStatusBar(

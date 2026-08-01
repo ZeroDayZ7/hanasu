@@ -15,7 +15,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roomInputHint => 'np. xyz15';
 
   @override
-  String get roomInputSubtitle => 'Wpisz kod pokoju lub wygeneruj nowy';
+  String get roomInputSubtitle => 'Wprowadź kod pokoju lub wygeneruj nowy';
 
   @override
   String get connectButton => 'POŁĄCZ';
@@ -49,11 +49,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String peerJoined(String peerId) {
-    return 'Peer $peerId dołączył do pokoju';
+    return 'Użytkownik $peerId dołączył do pokoju';
   }
 
   @override
-  String get peerLeft => 'Peer opuścił pokój';
+  String get peerLeft => 'Użytkownik opuścił pokój';
 
   @override
   String get statusDisconnected => 'Rozłączono';
@@ -71,4 +71,26 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get statusError => 'Błąd połączenia!';
+
+  @override
+  String get createRoomLabel => 'Nazwa pokoju';
+
+  @override
+  String get createRoomHint => 'Wprowadź nazwę nowego pokoju';
+
+  @override
+  String get noRoomsMessage =>
+      'Brak pokojów. Stwórz jeden, aby rozpocząć rozmowę.';
+
+  @override
+  String get joinRoomLabel => 'Kod pokoju';
+
+  @override
+  String get joinRoomHint => 'Wprowadź kod istniejącego pokoju';
+
+  @override
+  String get profileNickLabel => 'Pseudonim';
+
+  @override
+  String get profileNickHint => 'Wprowadź swoją nazwę wyświetlaną';
 }

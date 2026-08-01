@@ -207,6 +207,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connection error!'**
   String get statusError;
+
+  /// No description provided for @createRoomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Room name'**
+  String get createRoomLabel;
+
+  /// No description provided for @createRoomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name for the new room'**
+  String get createRoomHint;
+
+  /// No description provided for @noRoomsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No rooms yet. Create one to start chatting.'**
+  String get noRoomsMessage;
+
+  /// No description provided for @joinRoomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Room code'**
+  String get joinRoomLabel;
+
+  /// No description provided for @joinRoomHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter existing room code'**
+  String get joinRoomHint;
+
+  /// No description provided for @profileNickLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get profileNickLabel;
+
+  /// No description provided for @profileNickHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your display name'**
+  String get profileNickHint;
 }
 
 class _AppLocalizationsDelegate

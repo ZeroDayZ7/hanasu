@@ -42,5 +42,12 @@
     }
   },
   "statusWaitingForPeer": "Waiting for peer...",
-  "statusError": "Connection error!"
+  "statusError": "Connection error!",
+  "createRoomLabel": "Room name",
+  "createRoomHint": "Enter a name for the new room",
+  "noRoomsMessage": "No rooms yet. Create one to start chatting.",
+  "joinRoomLabel": "Room code",
+  "joinRoomHint": "Enter existing room code",
+  "profileNickLabel": "Nickname",
+  "profileNickHint": "Enter your display name"
 }

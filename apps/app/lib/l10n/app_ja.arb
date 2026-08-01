@@ -1,15 +1,15 @@
 {
   "@@locale": "ja",
   "appTitle": "HANASU :: P2P VOICE",
-  "roomInputHint": "例: xyz15",
-  "roomInputSubtitle": "ルームコードを入力するか、新規生成してください",
+  "roomInputHint": "例：xyz15",
+  "roomInputSubtitle": "ルームコードを入力するか、新しいコードを生成してください",
   "connectButton": "接続",
   "createRoomButton": "ルーム作成",
   "copyCodeTooltip": "コードをコピー",
   "codeCopiedSnackBar": "ルームコードをクリップボードにコピーしました: {pin}",
   "connectingToRoom": "ルーム {pin} に接続中...",
-  "micEnabled": "マイク：オン",
-  "micMuted": "マイク：ミュート",
+  "micEnabled": "マイク: オン",
+  "micMuted": "マイク: ミュート",
   "@codeCopiedSnackBar": {
     "placeholders": {
       "pin": { "type": "String" }
@@ -26,14 +26,14 @@
       "roomId": { "type": "String" }
     }
   },
-  "peerJoined": "ピア {peerId} が参加しました",
+  "peerJoined": "ユーザー {peerId} が参加しました",
   "@peerJoined": {
     "placeholders": {
       "peerId": { "type": "String" }
     }
   },
-  "peerLeft": "ピアが退出しました",
-  "statusDisconnected": "切断済み",
+  "peerLeft": "ユーザーが退出しました",
+  "statusDisconnected": "切断されました",
   "statusConnecting": "サーバーに接続中...",
   "statusConnectedWithPeer": "接続先: {peerId}",
   "@statusConnectedWithPeer": {
@@ -41,6 +41,13 @@
       "peerId": { "type": "String" }
     }
   },
-  "statusWaitingForPeer": "相手の接続を待機中...",
-  "statusError": "接続エラー！"
+  "statusWaitingForPeer": "相手の参加を待っています...",
+  "statusError": "接続エラー！",
+  "createRoomLabel": "ルーム名",
+  "createRoomHint": "新しいルームの名前を入力してください",
+  "noRoomsMessage": "ルームがまだありません。作成して会話を開始しましょう。",
+  "joinRoomLabel": "ルームコード",
+  "joinRoomHint": "既存のルームコードを入力してください",
+  "profileNickLabel": "ニックネーム",
+  "profileNickHint": "表示名を入力してください"
 }

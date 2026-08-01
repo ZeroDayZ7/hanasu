@@ -71,4 +71,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statusError => 'Connection error!';
+
+  @override
+  String get createRoomLabel => 'Room name';
+
+  @override
+  String get createRoomHint => 'Enter a name for the new room';
+
+  @override
+  String get noRoomsMessage => 'No rooms yet. Create one to start chatting.';
+
+  @override
+  String get joinRoomLabel => 'Room code';
+
+  @override
+  String get joinRoomHint => 'Enter existing room code';
+
+  @override
+  String get profileNickLabel => 'Nickname';
+
+  @override
+  String get profileNickHint => 'Enter your display name';
 }

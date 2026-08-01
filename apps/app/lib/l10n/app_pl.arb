@@ -2,7 +2,7 @@
   "@@locale": "pl",
   "appTitle": "HANASU :: P2P VOICE",
   "roomInputHint": "np. xyz15",
-  "roomInputSubtitle": "Wpisz kod pokoju lub wygeneruj nowy",
+  "roomInputSubtitle": "Wprowadź kod pokoju lub wygeneruj nowy",
   "connectButton": "POŁĄCZ",
   "createRoomButton": "STWÓRZ POKÓJ",
   "copyCodeTooltip": "Kopiuj kod",
@@ -26,13 +26,13 @@
       "roomId": { "type": "String" }
     }
   },
-  "peerJoined": "Peer {peerId} dołączył do pokoju",
+  "peerJoined": "Użytkownik {peerId} dołączył do pokoju",
   "@peerJoined": {
     "placeholders": {
       "peerId": { "type": "String" }
     }
   },
-  "peerLeft": "Peer opuścił pokój",
+  "peerLeft": "Użytkownik opuścił pokój",
   "statusDisconnected": "Rozłączono",
   "statusConnecting": "Łączenie z serwerem...",
   "statusConnectedWithPeer": "Połączono z: {peerId}",
@@ -42,5 +42,12 @@
     }
   },
   "statusWaitingForPeer": "Oczekiwanie na drugiego użytkownika...",
-  "statusError": "Błąd połączenia!"
+  "statusError": "Błąd połączenia!",
+  "createRoomLabel": "Nazwa pokoju",
+  "createRoomHint": "Wprowadź nazwę nowego pokoju",
+  "noRoomsMessage": "Brak pokojów. Stwórz jeden, aby rozpocząć rozmowę.",
+  "joinRoomLabel": "Kod pokoju",
+  "joinRoomHint": "Wprowadź kod istniejącego pokoju",
+  "profileNickLabel": "Pseudonim",
+  "profileNickHint": "Wprowadź swoją nazwę wyświetlaną"
 }
