@@ -103,7 +103,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'HANASU :: P2P VOICE'**
+  /// **'HANASU :: P2P'**
   String get appTitle;
 
   /// No description provided for @roomInputHint.
@@ -261,6 +261,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'RETRY'**
   String get retryAction;
+
+  /// No description provided for @apiStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'API Ready'**
+  String get apiStatusReady;
+
+  /// No description provided for @apiStatusOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'API Offline'**
+  String get apiStatusOffline;
+
+  /// No description provided for @apiStatusChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get apiStatusChecking;
+
+  /// No description provided for @quickConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Connect'**
+  String get quickConnectTitle;
+
+  /// No description provided for @defaultRoomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Default Room (#{roomId})'**
+  String defaultRoomTitle(String roomId);
+
+  /// No description provided for @joinButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get joinButton;
 }
 
 class _AppLocalizationsDelegate

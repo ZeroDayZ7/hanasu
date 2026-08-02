@@ -142,7 +142,9 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
               Expanded(child: ChatMessageList(roomId: widget.roomId)),
               MicrophoneControl(
                 isMicEnabled: sessionState.isMicEnabled,
-                onToggle: controller.toggleMicrophone,
+                isSpeakerphoneEnabled: sessionState.isSpeakerphoneEnabled,
+                onToggleMic: controller.toggleMicrophone,
+                onToggleSpeakerphone: controller.toggleSpeakerphone,
               ),
             ],
           ),

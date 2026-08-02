@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "HANASU :: P2P VOICE",
+  "appTitle": "HANASU :: P2P",
   "roomInputHint": "e.g., xyz15",
   "roomInputSubtitle": "Enter a room code or generate a new one",
   "connectButton": "CONNECT",
@@ -51,5 +51,16 @@
   "profileNickLabel": "Nickname",
   "profileNickHint": "Enter your display name",
   "serverUnreachableError": "Server unreachable. Please check your connection.",
-  "retryAction": "RETRY"
+  "retryAction": "RETRY",
+  "apiStatusReady": "API Ready",
+  "apiStatusOffline": "API Offline",
+  "apiStatusChecking": "Checking...",
+  "quickConnectTitle": "Quick Connect",
+  "defaultRoomTitle": "Default Room (#{roomId})",
+  "@defaultRoomTitle": {
+    "placeholders": {
+      "roomId": { "type": "String" }
+    }
+  },
+  "joinButton": "Join"
 }

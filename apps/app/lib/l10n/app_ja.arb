@@ -1,6 +1,6 @@
 {
   "@@locale": "ja",
-  "appTitle": "HANASU :: P2P VOICE",
+  "appTitle": "HANASU :: P2P",
   "roomInputHint": "例: xyz15",
   "roomInputSubtitle": "ルームコードを入力するか、新規生成してください",
   "connectButton": "接続",
@@ -51,5 +51,16 @@
   "profileNickLabel": "ニックネーム",
   "profileNickHint": "表示名を入力してください",
   "serverUnreachableError": "サーバーに接続できません。通信状態を確認してください。",
-  "retryAction": "再試行"
+  "retryAction": "再試行",
+  "apiStatusReady": "API 準備完了",
+  "apiStatusOffline": "API オフライン",
+  "apiStatusChecking": "確認中...",
+  "quickConnectTitle": "クイック接続",
+  "defaultRoomTitle": "デフォルトルーム (#{roomId})",
+  "@defaultRoomTitle": {
+    "placeholders": {
+      "roomId": { "type": "String" }
+    }
+  },
+  "joinButton": "参加"
 }

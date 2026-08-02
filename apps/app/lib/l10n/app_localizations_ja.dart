@@ -9,7 +9,7 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appTitle => 'HANASU :: P2P VOICE';
+  String get appTitle => 'HANASU :: P2P';
 
   @override
   String get roomInputHint => '例: xyz15';
@@ -98,4 +98,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get retryAction => '再試行';
+
+  @override
+  String get apiStatusReady => 'API 準備完了';
+
+  @override
+  String get apiStatusOffline => 'API オフライン';
+
+  @override
+  String get apiStatusChecking => '確認中...';
+
+  @override
+  String get quickConnectTitle => 'クイック接続';
+
+  @override
+  String defaultRoomTitle(String roomId) {
+    return 'デフォルトルーム (#$roomId)';
+  }
+
+  @override
+  String get joinButton => '参加';
 }

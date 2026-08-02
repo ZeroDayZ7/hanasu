@@ -1,4 +1,5 @@
 import 'package:app/core/network/backend_health_provider.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,20 +18,22 @@ class HealthStatusBadge extends ConsumerWidget {
   }
 
   Widget _buildBadge(BuildContext context, WidgetRef ref, HealthStatus status) {
+    final l10n = AppLocalizations.of(context)!;
+
     final (color, label, icon) = switch (status) {
       HealthStatus.healthy => (
         Colors.greenAccent,
-        'API Ready',
+        l10n.apiStatusReady,
         Icons.check_circle_outline,
       ),
       HealthStatus.unreachable => (
         Colors.redAccent,
-        'API Offline',
+        l10n.apiStatusOffline,
         Icons.error_outline,
       ),
       HealthStatus.checking => (
         Colors.orangeAccent,
-        'Sprawdzanie...',
+        l10n.apiStatusChecking,
         Icons.sync,
       ),
     };

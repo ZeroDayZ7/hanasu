@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:app/core/audio/ice_candidates_handler.dart';
 import 'package:app/core/audio/sdp_negotiation.dart';
@@ -7,6 +8,7 @@ import 'package:app/core/audio/webrtc_stats_monitor.dart';
 import 'package:app/core/logger/app_logger.dart';
 import 'package:app/core/network/signaling_client.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 final class WebRtcService {
@@ -106,6 +108,29 @@ final class WebRtcService {
     _logger.i('Local audio track state: enabled = ${!muted}', module: 'WebRTC');
   }
 
+  Future<void> setSpeakerphoneOn(bool enable) async {
+    // Przełączanie głośnika ma sens tylko na urządzeniach mobilnych
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
+      _logger.i(
+        'Speakerphone toggle ignored on non-mobile platform',
+        module: 'WebRTC',
+      );
+      return;
+    }
+
+    try {
+      await Helper.setSpeakerphoneOn(enable);
+      _logger.i('Speakerphone output set to: $enable', module: 'WebRTC');
+    } catch (e, st) {
+      _logger.e(
+        'Failed to change speakerphone output',
+        module: 'WebRTC',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
   Future<void> _createPeerConnection() async {
     if (_peerConnection != null) return;
 
@@ -179,11 +204,12 @@ final class WebRtcService {
       );
       await session.setActive(true);
 
-      // Wymuszenie domyślnego odtwarzania przez słuchawki (przestawia z głośnika usznego/głównego na Jack/Bluetooth jeśli podpięte)
-      // Helper.setSpeakerphoneOn(false);
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        await Helper.setSpeakerphoneOn(false);
+      }
 
       _logger.i(
-        'Audio session configured for Voice Communication',
+        'Audio session configured for Earpiece Voice Communication',
         module: 'WebRTC',
       );
     } catch (e, st) {

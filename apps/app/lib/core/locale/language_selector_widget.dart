@@ -1,16 +1,23 @@
+import 'package:app/core/locale/locale_provider.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:app/core/locale/locale_provider.dart';
+class LanguageOption {
+  final Locale locale;
+  final String label;
+
+  const LanguageOption({required this.locale, required this.label});
+}
+
+const List<LanguageOption> appLanguages = [
+  LanguageOption(locale: Locale('en'), label: 'English'),
+  LanguageOption(locale: Locale('pl'), label: 'Polski'),
+  LanguageOption(locale: Locale('ja'), label: '日本語'),
+];
 
 class LanguageSelectorWidget extends ConsumerWidget {
   const LanguageSelectorWidget({super.key});
-
-  static const List<Locale> _supportedLocales = [
-    Locale('en'),
-    Locale('pl'),
-    Locale('ja'),
-  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,14 +29,14 @@ class LanguageSelectorWidget extends ConsumerWidget {
         height: 42,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, _) => _buildDropdown(context, ref, const Locale('en')),
+      error: (_, _) => _buildDropdown(context, ref, appLanguages.first.locale),
       data: (currentLocale) {
-        final activeLocale = _supportedLocales.firstWhere(
-          (locale) => locale.languageCode == currentLocale.languageCode,
-          orElse: () => const Locale('en'),
+        final activeOption = appLanguages.firstWhere(
+          (opt) => opt.locale.languageCode == currentLocale.languageCode,
+          orElse: () => appLanguages.first,
         );
 
-        return _buildDropdown(context, ref, activeLocale);
+        return _buildDropdown(context, ref, activeOption.locale);
       },
     );
   }
@@ -39,6 +46,15 @@ class LanguageSelectorWidget extends ConsumerWidget {
     WidgetRef ref,
     Locale activeLocale,
   ) {
+    // Weryfikacja ze wspieranymi językami w systemie (bezpiecznik)
+    final supportedCodes = AppLocalizations.supportedLocales
+        .map((l) => l.languageCode)
+        .toSet();
+
+    final availableOptions = appLanguages
+        .where((opt) => supportedCodes.contains(opt.locale.languageCode))
+        .toList();
+
     return Container(
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -56,32 +72,19 @@ class LanguageSelectorWidget extends ConsumerWidget {
             Icons.keyboard_arrow_down_rounded,
             color: Colors.white54,
           ),
-          items: const [
-            DropdownMenuItem(
-              value: Locale('en'),
-              child: _LanguageItem(label: 'English'),
-            ),
-            DropdownMenuItem(
-              value: Locale('pl'),
-              child: _LanguageItem(label: 'Polski'),
-            ),
-            DropdownMenuItem(
-              value: Locale('ja'),
-              child: _LanguageItem(label: '日本語'),
-            ),
-          ],
+          items: availableOptions.map((opt) {
+            return DropdownMenuItem<Locale>(
+              value: opt.locale,
+              child: _LanguageItem(label: opt.label),
+            );
+          }).toList(),
           selectedItemBuilder: (context) {
-            return const [
-              _LanguageSelected(label: 'English'),
-              _LanguageSelected(label: 'Polski'),
-              _LanguageSelected(label: '日本語'),
-            ];
+            return availableOptions.map((opt) {
+              return _LanguageSelected(label: opt.label);
+            }).toList();
           },
           onChanged: (newLocale) {
-            if (newLocale == null) {
-              return;
-            }
-
+            if (newLocale == null) return;
             ref.read(appLocaleProvider.notifier).setLocale(newLocale);
           },
         ),

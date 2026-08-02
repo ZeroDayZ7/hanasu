@@ -125,7 +125,7 @@ class HanasuApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('en'), Locale('pl'), Locale('ja')],
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: router,
       builder: (context, child) {
         return AppErrorBoundary(child: child ?? const SizedBox.shrink());

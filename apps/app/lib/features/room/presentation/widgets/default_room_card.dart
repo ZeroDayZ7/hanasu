@@ -1,3 +1,4 @@
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class DefaultRoomCard extends StatelessWidget {
@@ -12,6 +13,8 @@ class DefaultRoomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -36,16 +39,16 @@ class DefaultRoomCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Szybkie Połączenie',
-                  style: TextStyle(
+                Text(
+                  l10n.quickConnectTitle,
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  'Pokój Domyślny (#$roomId)',
+                  l10n.defaultRoomTitle(roomId),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
@@ -58,7 +61,7 @@ class DefaultRoomCard extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onJoin,
             icon: const Icon(Icons.bolt, size: 18),
-            label: const Text('Dołącz'),
+            label: Text(l10n.joinButton),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(

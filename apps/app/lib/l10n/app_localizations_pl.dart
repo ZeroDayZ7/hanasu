@@ -9,7 +9,7 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
-  String get appTitle => 'HANASU :: P2P VOICE';
+  String get appTitle => 'HANASU :: P2P';
 
   @override
   String get roomInputHint => 'np. xyz15';
@@ -100,4 +100,24 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get retryAction => 'PONÓW';
+
+  @override
+  String get apiStatusReady => 'API Gotowe';
+
+  @override
+  String get apiStatusOffline => 'API Offline';
+
+  @override
+  String get apiStatusChecking => 'Sprawdzanie...';
+
+  @override
+  String get quickConnectTitle => 'Szybkie Połączenie';
+
+  @override
+  String defaultRoomTitle(String roomId) {
+    return 'Pokój Domyślny (#$roomId)';
+  }
+
+  @override
+  String get joinButton => 'Dołącz';
 }

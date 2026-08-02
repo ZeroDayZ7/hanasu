@@ -69,22 +69,27 @@ class SessionMessagesController extends _$SessionMessagesController {
 
 class SessionState {
   final bool isMicEnabled;
+  final bool isSpeakerphoneEnabled;
   final SignalingState currentState;
   final String? peerId;
 
   const SessionState({
     this.isMicEnabled = true,
+    this.isSpeakerphoneEnabled = false,
     this.currentState = SignalingState.disconnected,
     this.peerId,
   });
 
   SessionState copyWith({
     bool? isMicEnabled,
+    bool? isSpeakerphoneEnabled,
     SignalingState? currentState,
     String? peerId,
   }) {
     return SessionState(
       isMicEnabled: isMicEnabled ?? this.isMicEnabled,
+      isSpeakerphoneEnabled:
+          isSpeakerphoneEnabled ?? this.isSpeakerphoneEnabled,
       currentState: currentState ?? this.currentState,
       peerId: peerId ?? this.peerId,
     );
@@ -113,7 +118,7 @@ class SessionController extends _$SessionController {
     await saveActiveRoomId(storage, roomId);
 
     final signaling = ref.read(signalingClientProvider);
-    
+
     // Upewniamy się, że serwis WebRTC został w pełni zainicjalizowany (wraz z AudioSession)
     await ref.read(webRtcServiceProvider.future);
 
@@ -145,10 +150,17 @@ class SessionController extends _$SessionController {
   Future<void> toggleMicrophone() async {
     final newMicState = !state.isMicEnabled;
     state = state.copyWith(isMicEnabled: newMicState);
-    
-    // Odbieramy instancję serwisu i mutujemy stan mikrofonu
+
     final rtcService = await ref.read(webRtcServiceProvider.future);
     rtcService.setMicrophoneMuted(!newMicState);
+  }
+
+  Future<void> toggleSpeakerphone() async {
+    final newSpeakerState = !state.isSpeakerphoneEnabled;
+    state = state.copyWith(isSpeakerphoneEnabled: newSpeakerState);
+
+    final rtcService = await ref.read(webRtcServiceProvider.future);
+    await rtcService.setSpeakerphoneOn(newSpeakerState);
   }
 
   Future<void> leaveRoom() async {
@@ -156,10 +168,7 @@ class SessionController extends _$SessionController {
     final signaling = ref.read(signalingClientProvider);
 
     await signaling.disconnect();
-    
-    // Zamiast ręcznego wywoływania closeConnection(), unieważniamy provider.
-    // Riverpod automatycznie wywoła ref.onDispose() z audio_providers.dart, 
-    // zamykając połączenie i czyszcząc sesję audio VoIP.
+
     ref.invalidate(webRtcServiceProvider);
 
     await clearActiveRoomId(storage);
