@@ -1,25 +1,25 @@
 {
   "@@locale": "ja",
   "appTitle": "HANASU :: P2P VOICE",
-  "roomInputHint": "例：xyz15",
-  "roomInputSubtitle": "ルームコードを入力するか、新しいコードを生成してください",
+  "roomInputHint": "例: xyz15",
+  "roomInputSubtitle": "ルームコードを入力するか、新規生成してください",
   "connectButton": "接続",
   "createRoomButton": "ルーム作成",
   "copyCodeTooltip": "コードをコピー",
-  "codeCopiedSnackBar": "ルームコードをクリップボードにコピーしました: {pin}",
-  "connectingToRoom": "ルーム {pin} に接続中...",
-  "micEnabled": "マイク: オン",
-  "micMuted": "マイク: ミュート",
+  "codeCopiedSnackBar": "クリップボードにコードをコピーしました: {pin}",
   "@codeCopiedSnackBar": {
     "placeholders": {
       "pin": { "type": "String" }
     }
   },
+  "connectingToRoom": "ルーム {pin} に接続中...",
   "@connectingToRoom": {
     "placeholders": {
       "pin": { "type": "String" }
     }
   },
+  "micEnabled": "マイク: オン",
+  "micMuted": "マイク: ミュート",
   "roomTitle": "ルーム: {roomId}",
   "@roomTitle": {
     "placeholders": {
@@ -44,10 +44,12 @@
   "statusWaitingForPeer": "相手の参加を待っています...",
   "statusError": "接続エラー！",
   "createRoomLabel": "ルーム名",
-  "createRoomHint": "新しいルームの名前を入力してください",
-  "noRoomsMessage": "ルームがまだありません。作成して会話を開始しましょう。",
+  "createRoomHint": "新しいルーム名を入力してください",
+  "noRoomsMessage": "ルームがありません。作成してチャットを開始してください。",
   "joinRoomLabel": "ルームコード",
   "joinRoomHint": "既存のルームコードを入力してください",
   "profileNickLabel": "ニックネーム",
-  "profileNickHint": "表示名を入力してください"
+  "profileNickHint": "表示名を入力してください",
+  "serverUnreachableError": "サーバーに接続できません。通信状態を確認してください。",
+  "retryAction": "再試行"
 }

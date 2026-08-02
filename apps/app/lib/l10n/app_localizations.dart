@@ -249,6 +249,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter your display name'**
   String get profileNickHint;
+
+  /// No description provided for @serverUnreachableError.
+  ///
+  /// In en, this message translates to:
+  /// **'Server unreachable. Please check your connection.'**
+  String get serverUnreachableError;
+
+  /// No description provided for @retryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get retryAction;
 }
 
 class _AppLocalizationsDelegate

@@ -2,24 +2,24 @@
   "@@locale": "pl",
   "appTitle": "HANASU :: P2P VOICE",
   "roomInputHint": "np. xyz15",
-  "roomInputSubtitle": "Wprowadź kod pokoju lub wygeneruj nowy",
+  "roomInputSubtitle": "Wpisz kod pokoju lub wygeneruj nowy",
   "connectButton": "POŁĄCZ",
   "createRoomButton": "STWÓRZ POKÓJ",
   "copyCodeTooltip": "Kopiuj kod",
   "codeCopiedSnackBar": "Skopiowano kod pokoju do schowka: {pin}",
-  "connectingToRoom": "Łączenie z pokojem {pin}...",
-  "micEnabled": "Mikrofon: WŁĄCZONY",
-  "micMuted": "Mikrofon: WYCISZONY",
   "@codeCopiedSnackBar": {
     "placeholders": {
       "pin": { "type": "String" }
     }
   },
+  "connectingToRoom": "Łączenie z pokojem {pin}...",
   "@connectingToRoom": {
     "placeholders": {
       "pin": { "type": "String" }
     }
   },
+  "micEnabled": "Mikrofon: WŁĄCZONY",
+  "micMuted": "Mikrofon: WYCISZONY",
   "roomTitle": "POKÓJ: {roomId}",
   "@roomTitle": {
     "placeholders": {
@@ -44,10 +44,12 @@
   "statusWaitingForPeer": "Oczekiwanie na drugiego użytkownika...",
   "statusError": "Błąd połączenia!",
   "createRoomLabel": "Nazwa pokoju",
-  "createRoomHint": "Wprowadź nazwę nowego pokoju",
-  "noRoomsMessage": "Brak pokojów. Stwórz jeden, aby rozpocząć rozmowę.",
+  "createRoomHint": "Wprowadź nazwę dla nowego pokoju",
+  "noRoomsMessage": "Brak pokoi. Stwórz nowy, aby rozpocząć rozmowę.",
   "joinRoomLabel": "Kod pokoju",
-  "joinRoomHint": "Wprowadź kod istniejącego pokoju",
+  "joinRoomHint": "Wprowadź istniejący kod pokoju",
   "profileNickLabel": "Pseudonim",
-  "profileNickHint": "Wprowadź swoją nazwę wyświetlaną"
+  "profileNickHint": "Wprowadź swoją nazwę",
+  "serverUnreachableError": "Serwer jest niedostępny. Sprawdź połączenie.",
+  "retryAction": "PONÓW"
 }

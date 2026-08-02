@@ -2,7 +2,7 @@
   "files.exclude": {
     "**/.idea": true,
     "**/.dart_tool": true,
-    // "**/build": true,
+    "**/build": true,
     "**/.flutter-plugins-dependencies": true,
     "**/.metadata": true,
     "**/.kotlin": true,
@@ -13,7 +13,7 @@
     "**/macos": true,
     "**/web": true,
     "**/windows": true,
-    // "**/android": true,
+    "**/android": true,
     "**/test": true,
     "**/.gitattributes": true,
     "**/pubspec.lock": true,

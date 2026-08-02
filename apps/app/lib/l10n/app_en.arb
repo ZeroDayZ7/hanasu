@@ -7,19 +7,19 @@
   "createRoomButton": "CREATE ROOM",
   "copyCodeTooltip": "Copy code",
   "codeCopiedSnackBar": "Copied room code to clipboard: {pin}",
-  "connectingToRoom": "Connecting to room {pin}...",
-  "micEnabled": "Microphone: ON",
-  "micMuted": "Microphone: MUTED",
   "@codeCopiedSnackBar": {
     "placeholders": {
       "pin": { "type": "String" }
     }
   },
+  "connectingToRoom": "Connecting to room {pin}...",
   "@connectingToRoom": {
     "placeholders": {
       "pin": { "type": "String" }
     }
   },
+  "micEnabled": "Microphone: ON",
+  "micMuted": "Microphone: MUTED",
   "roomTitle": "ROOM: {roomId}",
   "@roomTitle": {
     "placeholders": {
@@ -49,5 +49,7 @@
   "joinRoomLabel": "Room code",
   "joinRoomHint": "Enter existing room code",
   "profileNickLabel": "Nickname",
-  "profileNickHint": "Enter your display name"
+  "profileNickHint": "Enter your display name",
+  "serverUnreachableError": "Server unreachable. Please check your connection.",
+  "retryAction": "RETRY"
 }

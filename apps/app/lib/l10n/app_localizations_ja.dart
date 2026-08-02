@@ -12,10 +12,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appTitle => 'HANASU :: P2P VOICE';
 
   @override
-  String get roomInputHint => '例：xyz15';
+  String get roomInputHint => '例: xyz15';
 
   @override
-  String get roomInputSubtitle => 'ルームコードを入力するか、新しいコードを生成してください';
+  String get roomInputSubtitle => 'ルームコードを入力するか、新規生成してください';
 
   @override
   String get connectButton => '接続';
@@ -28,7 +28,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String codeCopiedSnackBar(String pin) {
-    return 'ルームコードをクリップボードにコピーしました: $pin';
+    return 'クリップボードにコードをコピーしました: $pin';
   }
 
   @override
@@ -76,10 +76,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get createRoomLabel => 'ルーム名';
 
   @override
-  String get createRoomHint => '新しいルームの名前を入力してください';
+  String get createRoomHint => '新しいルーム名を入力してください';
 
   @override
-  String get noRoomsMessage => 'ルームがまだありません。作成して会話を開始しましょう。';
+  String get noRoomsMessage => 'ルームがありません。作成してチャットを開始してください。';
 
   @override
   String get joinRoomLabel => 'ルームコード';
@@ -92,4 +92,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get profileNickHint => '表示名を入力してください';
+
+  @override
+  String get serverUnreachableError => 'サーバーに接続できません。通信状態を確認してください。';
+
+  @override
+  String get retryAction => '再試行';
 }

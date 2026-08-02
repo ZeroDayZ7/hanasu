@@ -92,4 +92,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileNickHint => 'Enter your display name';
+
+  @override
+  String get serverUnreachableError =>
+      'Server unreachable. Please check your connection.';
+
+  @override
+  String get retryAction => 'RETRY';
 }

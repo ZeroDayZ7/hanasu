@@ -15,7 +15,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get roomInputHint => 'np. xyz15';
 
   @override
-  String get roomInputSubtitle => 'Wprowadź kod pokoju lub wygeneruj nowy';
+  String get roomInputSubtitle => 'Wpisz kod pokoju lub wygeneruj nowy';
 
   @override
   String get connectButton => 'POŁĄCZ';
@@ -76,21 +76,28 @@ class AppLocalizationsPl extends AppLocalizations {
   String get createRoomLabel => 'Nazwa pokoju';
 
   @override
-  String get createRoomHint => 'Wprowadź nazwę nowego pokoju';
+  String get createRoomHint => 'Wprowadź nazwę dla nowego pokoju';
 
   @override
   String get noRoomsMessage =>
-      'Brak pokojów. Stwórz jeden, aby rozpocząć rozmowę.';
+      'Brak pokoi. Stwórz nowy, aby rozpocząć rozmowę.';
 
   @override
   String get joinRoomLabel => 'Kod pokoju';
 
   @override
-  String get joinRoomHint => 'Wprowadź kod istniejącego pokoju';
+  String get joinRoomHint => 'Wprowadź istniejący kod pokoju';
 
   @override
   String get profileNickLabel => 'Pseudonim';
 
   @override
-  String get profileNickHint => 'Wprowadź swoją nazwę wyświetlaną';
+  String get profileNickHint => 'Wprowadź swoją nazwę';
+
+  @override
+  String get serverUnreachableError =>
+      'Serwer jest niedostępny. Sprawdź połączenie.';
+
+  @override
+  String get retryAction => 'PONÓW';
 }
