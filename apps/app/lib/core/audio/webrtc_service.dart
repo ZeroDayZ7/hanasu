@@ -180,7 +180,7 @@ final class WebRtcService {
       await session.setActive(true);
 
       // Wymuszenie domyślnego odtwarzania przez słuchawki (przestawia z głośnika usznego/głównego na Jack/Bluetooth jeśli podpięte)
-      Helper.setSpeakerphoneOn(false);
+      // Helper.setSpeakerphoneOn(false);
 
       _logger.i(
         'Audio session configured for Voice Communication',

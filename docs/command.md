@@ -14,8 +14,6 @@ adb devices
 5200d78bfa479449 device 17
 310008a89dd353f9 unauthorized 16
 
-adb -s 5200d78bfa479449 reverse tcp:8081 tcp:8081
-
 .\scrcpy -s 5200d78bfa479449
 .\scrcpy -s 310008a89dd353f9
 
