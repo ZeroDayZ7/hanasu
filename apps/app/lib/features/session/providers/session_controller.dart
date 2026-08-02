@@ -113,7 +113,9 @@ class SessionController extends _$SessionController {
     await saveActiveRoomId(storage, roomId);
 
     final signaling = ref.read(signalingClientProvider);
-    ref.read(webRtcServiceProvider);
+    
+    // Upewniamy się, że serwis WebRTC został w pełni zainicjalizowany (wraz z AudioSession)
+    await ref.read(webRtcServiceProvider.future);
 
     _stateSub = signaling.stateStream.listen((state) {
       _updateSignalingState(state);
@@ -140,10 +142,13 @@ class SessionController extends _$SessionController {
     state = state.copyWith(currentState: newState);
   }
 
-  void toggleMicrophone() {
+  Future<void> toggleMicrophone() async {
     final newMicState = !state.isMicEnabled;
     state = state.copyWith(isMicEnabled: newMicState);
-    ref.read(webRtcServiceProvider).setMicrophoneMuted(!newMicState);
+    
+    // Odbieramy instancję serwisu i mutujemy stan mikrofonu
+    final rtcService = await ref.read(webRtcServiceProvider.future);
+    rtcService.setMicrophoneMuted(!newMicState);
   }
 
   Future<void> leaveRoom() async {
@@ -151,7 +156,12 @@ class SessionController extends _$SessionController {
     final signaling = ref.read(signalingClientProvider);
 
     await signaling.disconnect();
-    await ref.read(webRtcServiceProvider).closeConnection();
+    
+    // Zamiast ręcznego wywoływania closeConnection(), unieważniamy provider.
+    // Riverpod automatycznie wywoła ref.onDispose() z audio_providers.dart, 
+    // zamykając połączenie i czyszcząc sesję audio VoIP.
+    ref.invalidate(webRtcServiceProvider);
+
     await clearActiveRoomId(storage);
   }
 }

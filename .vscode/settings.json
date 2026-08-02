@@ -13,7 +13,7 @@
     "**/macos": true,
     "**/web": true,
     "**/windows": true,
-    "**/android": true,
+    // "**/android": true,
     "**/test": true,
     "**/.gitattributes": true,
     "**/pubspec.lock": true,

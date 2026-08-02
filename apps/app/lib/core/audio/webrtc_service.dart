@@ -6,6 +6,7 @@ import 'package:app/core/audio/webrtc_config.dart';
 import 'package:app/core/audio/webrtc_stats_monitor.dart';
 import 'package:app/core/logger/app_logger.dart';
 import 'package:app/core/network/signaling_client.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
 final class WebRtcService {
@@ -27,9 +28,13 @@ final class WebRtcService {
 
   MediaStream? get remoteStream => _remoteStream;
 
-  void initialize() {
+  Future<void> initialize() async {
     _logger.i('Initializing WebRtcService...', module: 'WebRTC');
 
+    // 1. Inicjalizacja profesjonalnej sesji Audio VoIP przed przechwyceniem mikrofonu
+    await _configureAudioSession();
+
+    // 2. Subskrypcja zdarzeń sygnalizacyjnych
     _eventSubscription = _signalingClient.eventStream.listen((event) async {
       try {
         switch (event) {
@@ -73,7 +78,6 @@ final class WebRtcService {
             :final sdpMid,
             :final sdpMLineIndex,
           ):
-            // Zamiast mutowania tablicy, przekazujemy do izolowanej kolejki
             _iceQueue?.addCandidate(
               RTCIceCandidate(candidate, sdpMid, sdpMLineIndex),
             );
@@ -108,7 +112,6 @@ final class WebRtcService {
     final pc = await createPeerConnection(WebRtcConfig.rtcConfiguration);
     _peerConnection = pc;
 
-    // Reset kolejki dla nowego połączenia P2P
     await _iceQueue?.dispose();
     _iceQueue = IceCandidateQueue(_logger);
 
@@ -151,6 +154,41 @@ final class WebRtcService {
     } catch (e, st) {
       _logger.e(
         'Microphone access error',
+        module: 'WebRTC',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  Future<void> _configureAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(
+        const AudioSessionConfiguration(
+          avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
+          avAudioSessionCategoryOptions:
+              AVAudioSessionCategoryOptions.allowBluetooth,
+          avAudioSessionMode: AVAudioSessionMode.voiceChat,
+          androidAudioAttributes: AndroidAudioAttributes(
+            contentType: AndroidAudioContentType.speech,
+            usage: AndroidAudioUsage.voiceCommunication,
+          ),
+          androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        ),
+      );
+      await session.setActive(true);
+
+      // Wymuszenie domyślnego odtwarzania przez słuchawki (przestawia z głośnika usznego/głównego na Jack/Bluetooth jeśli podpięte)
+      Helper.setSpeakerphoneOn(false);
+
+      _logger.i(
+        'Audio session configured for Voice Communication',
+        module: 'WebRTC',
+      );
+    } catch (e, st) {
+      _logger.e(
+        'Failed to configure Audio Session',
         module: 'WebRTC',
         error: e,
         stackTrace: st,
@@ -207,5 +245,14 @@ final class WebRtcService {
     _peerConnection = null;
     _remoteStream = null;
     _targetPeerId = null;
+
+    // Dezaktywacja sesji Audio i powrót systemu do normalnego trybu odtwarzania dźwięków
+    try {
+      final session = await AudioSession.instance;
+      await session.setActive(false);
+      _logger.i('Audio session deactivated', module: 'WebRTC');
+    } catch (e) {
+      _logger.e('Error deactivating Audio Session', module: 'WebRTC', error: e);
+    }
   }
 }

@@ -37,7 +37,10 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     await _remoteRenderer.initialize();
     if (!mounted) return;
 
-    final webRtcService = ref.read(webRtcServiceProvider);
+    // Pobieramy zainicjalizowany asynchronicznie WebRtcService z FutureProvidera
+    final webRtcService = await ref.read(webRtcServiceProvider.future);
+    if (!mounted) return;
+
     setState(() {
       _remoteRenderer.srcObject = webRtcService.remoteStream;
       _isRendererInitialized = true;
@@ -91,6 +94,18 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
           context.pop();
         }
       }
+    });
+
+    // Reaktywne podpięcie zdalnego strumienia po nawiązaniu połączenia P2P
+    ref.listen(webRtcServiceProvider, (previous, next) {
+      next.whenData((webRtcService) {
+        if (_isRendererInitialized &&
+            _remoteRenderer.srcObject != webRtcService.remoteStream) {
+          setState(() {
+            _remoteRenderer.srcObject = webRtcService.remoteStream;
+          });
+        }
+      });
     });
 
     final sessionState = ref.watch(sessionProvider);

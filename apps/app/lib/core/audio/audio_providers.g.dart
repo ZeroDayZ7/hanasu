@@ -13,15 +13,22 @@ part of 'audio_providers.dart';
 final webRtcServiceProvider = WebRtcServiceProvider._();
 
 final class WebRtcServiceProvider
-    extends $FunctionalProvider<WebRtcService, WebRtcService, WebRtcService>
-    with $Provider<WebRtcService> {
+    extends
+        $FunctionalProvider<
+          AsyncValue<Raw<WebRtcService>>,
+          Raw<WebRtcService>,
+          FutureOr<Raw<WebRtcService>>
+        >
+    with
+        $FutureModifier<Raw<WebRtcService>>,
+        $FutureProvider<Raw<WebRtcService>> {
   WebRtcServiceProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'webRtcServiceProvider',
-        isAutoDispose: false,
+        isAutoDispose: true,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -31,21 +38,14 @@ final class WebRtcServiceProvider
 
   @$internal
   @override
-  $ProviderElement<WebRtcService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $FutureProviderElement<Raw<WebRtcService>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
-  WebRtcService create(Ref ref) {
+  FutureOr<Raw<WebRtcService>> create(Ref ref) {
     return webRtcService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(WebRtcService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<WebRtcService>(value),
-    );
   }
 }
 
-String _$webRtcServiceHash() => r'c83cb179387e2e68de15187ef0ee4ef71432ba95';
+String _$webRtcServiceHash() => r'be3e81da2214fcef6615ef69e122e14d96d59d80';
