@@ -27,8 +27,8 @@
     "**/app_localizations.dart": true,
 
     "**/.gitignore": true,
-    "**/l10n.yaml": true,
-    "**/README.md": true
+    "**/l10n.yaml": true
+    // "**/README.md": true
   },
 
   "search.exclude": {

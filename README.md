@@ -17,5 +17,5 @@ A real-time speech translation system operating over a P2P / Tailscale network u
 ## Interface WIP
 
 <p align="center">
-  <img src="docs/img.png" alt="Hanasu Banner" />
+ <img src="docs/images/img_1.png" alt="Hanasu Interface 2"/>
 </p>
