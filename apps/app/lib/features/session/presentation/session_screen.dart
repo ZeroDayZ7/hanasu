@@ -23,34 +23,53 @@ class SessionScreen extends ConsumerStatefulWidget {
 }
 
 class _SessionScreenState extends ConsumerState<SessionScreen> {
-  late final RTCVideoRenderer _remoteRenderer;
+  RTCVideoRenderer? _remoteRenderer;
   bool _isRendererInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _remoteRenderer = RTCVideoRenderer();
     _initRenderer();
   }
 
   Future<void> _initRenderer() async {
-    await _remoteRenderer.initialize();
-    if (!mounted) return;
+    final renderer = RTCVideoRenderer();
+    await renderer.initialize();
+    if (!mounted) {
+      await renderer.dispose();
+      return;
+    }
 
-    // Pobieramy zainicjalizowany asynchronicznie WebRtcService z FutureProvidera
+    _remoteRenderer = renderer;
+
     final webRtcService = await ref.read(webRtcServiceProvider.future);
     if (!mounted) return;
 
     setState(() {
-      _remoteRenderer.srcObject = webRtcService.remoteStream;
+      _remoteRenderer?.srcObject = webRtcService.remoteStream;
       _isRendererInitialized = true;
     });
   }
 
+  Future<void> _cleanupAndLeave() async {
+    // 1. Najpierw odpinamy strumień od renderera natywnego
+    if (_isRendererInitialized && _remoteRenderer != null) {
+      _remoteRenderer!.srcObject = null;
+    }
+
+    // 2. Opuszczamy pokój i zamykamy gniazdo WS oraz WebRTC
+    final controller = ref.read(
+      sessionControllerProvider(widget.roomId).notifier,
+    );
+    await controller.leaveRoom();
+  }
+
   @override
   void dispose() {
-    if (_isRendererInitialized) {
-      _remoteRenderer.dispose().catchError((_) {});
+    if (_remoteRenderer != null) {
+      _remoteRenderer!.srcObject = null;
+      _remoteRenderer!.dispose().catchError((_) {});
+      _remoteRenderer = null;
     }
     super.dispose();
   }
@@ -86,23 +105,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final l10n = AppLocalizations.of(context)!;
     final sessionProvider = sessionControllerProvider(widget.roomId);
 
-    // Nasłuch do automatycznego nawigowania wstecz po rozłączeniu
-    ref.listen(sessionProvider, (previous, next) {
-      if (next.currentState == SignalingState.disconnected &&
-          previous?.currentState != SignalingState.disconnected) {
-        if (context.mounted && context.canPop()) {
-          context.pop();
-        }
-      }
-    });
-
-    // Reaktywne podpięcie zdalnego strumienia po nawiązaniu połączenia P2P
+    // Reaktywne podpięcie zdalnego strumienia
     ref.listen(webRtcServiceProvider, (previous, next) {
       next.whenData((webRtcService) {
         if (_isRendererInitialized &&
-            _remoteRenderer.srcObject != webRtcService.remoteStream) {
+            _remoteRenderer != null &&
+            _remoteRenderer!.srcObject != webRtcService.remoteStream) {
           setState(() {
-            _remoteRenderer.srcObject = webRtcService.remoteStream;
+            _remoteRenderer!.srcObject = webRtcService.remoteStream;
           });
         }
       });
@@ -111,44 +121,51 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
     final sessionState = ref.watch(sessionProvider);
     final controller = ref.read(sessionProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.roomTitle(widget.roomId)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            onPressed: () async {
-              await controller.leaveRoom();
-              if (context.mounted && context.canPop()) {
-                context.pop();
-              }
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          if (_isRendererInitialized)
-            WindowsAudioRenderer(remoteRenderer: _remoteRenderer),
-          Column(
-            children: [
-              SessionStatusBar(
-                currentState: sessionState.currentState,
-                peerId: sessionState.peerId,
-                getStatusText: (state, peerId) =>
-                    _getStatusText(state, peerId, l10n),
-                getStatusColor: _getStatusColor,
-              ),
-              Expanded(child: ChatMessageList(roomId: widget.roomId)),
-              MicrophoneControl(
-                isMicEnabled: sessionState.isMicEnabled,
-                isSpeakerphoneEnabled: sessionState.isSpeakerphoneEnabled,
-                onToggleMic: controller.toggleMicrophone,
-                onToggleSpeakerphone: controller.toggleSpeakerphone,
-              ),
-            ],
-          ),
-        ],
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          await _cleanupAndLeave();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.roomTitle(widget.roomId)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.redAccent),
+              onPressed: () async {
+                await _cleanupAndLeave();
+                if (context.mounted && context.canPop()) {
+                  context.pop();
+                }
+              },
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            if (_isRendererInitialized && _remoteRenderer != null)
+              WindowsAudioRenderer(remoteRenderer: _remoteRenderer!),
+            Column(
+              children: [
+                SessionStatusBar(
+                  currentState: sessionState.currentState,
+                  peerId: sessionState.peerId,
+                  getStatusText: (state, peerId) =>
+                      _getStatusText(state, peerId, l10n),
+                  getStatusColor: _getStatusColor,
+                ),
+                Expanded(child: ChatMessageList(roomId: widget.roomId)),
+                MicrophoneControl(
+                  isMicEnabled: sessionState.isMicEnabled,
+                  isSpeakerphoneEnabled: sessionState.isSpeakerphoneEnabled,
+                  onToggleMic: controller.toggleMicrophone,
+                  onToggleSpeakerphone: controller.toggleSpeakerphone,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

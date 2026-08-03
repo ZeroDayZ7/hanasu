@@ -12,8 +12,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'session_controller.g.dart';
 
-// --- 1. IZOLOWANY PROVIDER DLA CZATU I TŁUMACZEŃ ---
-
 @riverpod
 class SessionMessagesController extends _$SessionMessagesController {
   @override
@@ -21,7 +19,6 @@ class SessionMessagesController extends _$SessionMessagesController {
     return const [];
   }
 
-  /// Dodawanie wiadomości systemowej (np. dołączenie/opuszczenie pokoju)
   void addSystemMessage(String text) {
     final msg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -35,7 +32,6 @@ class SessionMessagesController extends _$SessionMessagesController {
     state = [...state, msg];
   }
 
-  /// Dodawanie własnej wysłanej wiadomości
   void addMyMessage(String text, {String? authorId, String? authorNick}) {
     final msg = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -51,12 +47,10 @@ class SessionMessagesController extends _$SessionMessagesController {
     state = [...state, msg];
   }
 
-  /// Dodawanie wiadomości odebranej od innego uczestnika
   void addPeerMessage(ChatMessage message) {
     state = [...state, message.copyWith(source: MessageSource.other)];
   }
 
-  /// Aktualizacja stanu wiadomości (np. zmiana statusu na delivered / read lub dodanie translation)
   void updateMessage(ChatMessage updatedMessage) {
     state = [
       for (final msg in state)
@@ -64,8 +58,6 @@ class SessionMessagesController extends _$SessionMessagesController {
     ];
   }
 }
-
-// --- 2. PROVIDER SYGNAŁOWY I ZARZĄDZANIA SESJĄ ---
 
 class SessionState {
   final bool isMicEnabled;
@@ -103,12 +95,19 @@ class SessionController extends _$SessionController {
 
   @override
   SessionState build(String roomId) {
-    _initSession(roomId);
+    final storage = ref.read(secureStorageProvider);
+    final signaling = ref.read(signalingClientProvider);
 
     ref.onDispose(() {
       _stateSub?.cancel();
       _eventSub?.cancel();
+
+      unawaited(signaling.disconnect());
+      unawaited(clearActiveRoomId(storage));
+      ref.invalidate(webRtcServiceProvider);
     });
+
+    _initSession(roomId);
 
     return const SessionState();
   }
@@ -117,16 +116,23 @@ class SessionController extends _$SessionController {
     final storage = ref.read(secureStorageProvider);
     await saveActiveRoomId(storage, roomId);
 
-    final signaling = ref.read(signalingClientProvider);
+    if (!ref.mounted) return;
 
-    // Upewniamy się, że serwis WebRTC został w pełni zainicjalizowany (wraz z AudioSession)
+    final signaling = ref.read(signalingClientProvider);
     await ref.read(webRtcServiceProvider.future);
 
-    _stateSub = signaling.stateStream.listen((state) {
-      _updateSignalingState(state);
+    if (!ref.mounted) return;
+
+    _stateSub?.cancel();
+    _stateSub = signaling.stateStream.listen((newState) {
+      if (!ref.mounted) return;
+      state = state.copyWith(currentState: newState);
     });
 
+    _eventSub?.cancel();
     _eventSub = signaling.eventStream.listen((event) {
+      if (!ref.mounted) return;
+
       final messagesNotifier = ref.read(
         sessionMessagesControllerProvider(roomId).notifier,
       );
@@ -143,15 +149,13 @@ class SessionController extends _$SessionController {
     unawaited(signaling.connect(roomId));
   }
 
-  void _updateSignalingState(SignalingState newState) {
-    state = state.copyWith(currentState: newState);
-  }
-
   Future<void> toggleMicrophone() async {
     final newMicState = !state.isMicEnabled;
     state = state.copyWith(isMicEnabled: newMicState);
 
     final rtcService = await ref.read(webRtcServiceProvider.future);
+    if (!ref.mounted) return;
+
     rtcService.setMicrophoneMuted(!newMicState);
   }
 
@@ -160,6 +164,8 @@ class SessionController extends _$SessionController {
     state = state.copyWith(isSpeakerphoneEnabled: newSpeakerState);
 
     final rtcService = await ref.read(webRtcServiceProvider.future);
+    if (!ref.mounted) return;
+
     await rtcService.setSpeakerphoneOn(newSpeakerState);
   }
 
@@ -169,8 +175,9 @@ class SessionController extends _$SessionController {
 
     await signaling.disconnect();
 
-    ref.invalidate(webRtcServiceProvider);
+    if (!ref.mounted) return;
 
+    ref.invalidate(webRtcServiceProvider);
     await clearActiveRoomId(storage);
   }
 }

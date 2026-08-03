@@ -19,25 +19,27 @@ final class WsSignalingClient implements SignalingClient {
 
   final CircuitBreaker _circuitBreaker;
 
+  String? _peerId;
   String? _currentRoomId;
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
   bool _isConnecting = false;
   bool _isExplicitlyClosed = false;
 
-  // Konfiguracja Exponential Backoff
   static const Duration _initialDelay = Duration(seconds: 1);
   static const Duration _maxDelay = Duration(seconds: 30);
   static const double _backoffFactor = 1.5;
 
-  WsSignalingClient(
-    this._logger, {
-    CircuitBreaker? circuitBreaker,
-  }) : _circuitBreaker = circuitBreaker ??
-            CircuitBreaker(
-              maxFailures: 5,
-              resetTimeout: const Duration(minutes: 5),
-            );
+  WsSignalingClient(this._logger, {CircuitBreaker? circuitBreaker})
+    : _circuitBreaker =
+          circuitBreaker ??
+          CircuitBreaker(
+            maxFailures: 5,
+            resetTimeout: const Duration(minutes: 5),
+          );
+
+  @override
+  String? get peerId => _peerId;
 
   @override
   Stream<SignalingState> get stateStream => _stateController.stream;
@@ -80,7 +82,6 @@ final class WsSignalingClient implements SignalingClient {
       _isConnecting = false;
       _stopReconnectTimer();
 
-      // Sukces połączenia – resetujemy licznik barierowy i próby reconnecta
       _circuitBreaker.onSuccess();
 
       _stateController.add(SignalingState.connected);
@@ -120,12 +121,17 @@ final class WsSignalingClient implements SignalingClient {
     if (raw is! String) return;
 
     _logger.t('Received raw message: $raw', module: 'WsSignaling');
-    final event = parseSignalingMessage(raw);
+    final events = parseSignalingMessages(raw);
 
-    if (event != null) {
+    for (final event in events) {
+      if (event is RoomJoinedEvent) {
+        _peerId = event.myPeerId;
+      }
       _logger.d('Parsed event: ${event.runtimeType}', module: 'WsSignaling');
       _eventController.add(event);
-    } else {
+    }
+
+    if (events.isEmpty) {
       _logger.w(
         'Unknown or unparseable payload received: $raw',
         module: 'WsSignaling',
@@ -134,6 +140,7 @@ final class WsSignalingClient implements SignalingClient {
   }
 
   void _handleConnectionLoss() {
+    _peerId = null;
     _circuitBreaker.onFailure();
     _stateController.add(SignalingState.disconnected);
 
@@ -179,7 +186,6 @@ final class WsSignalingClient implements SignalingClient {
       _maxDelay.inMilliseconds.toDouble(),
     );
 
-    // Jitter: dodajemy losowy szum (0-25%), aby zapobiec jednoczesnym strzałom wielu klientów
     final random = Random();
     final jitter = cappedMs * 0.25 * random.nextDouble();
 
@@ -253,10 +259,12 @@ final class WsSignalingClient implements SignalingClient {
     });
   }
 
-  /// Wywoływane z zewnątrz (np. przez listener Connectivity), gdy powróci połączenie z siecią.
   void onNetworkRestored() {
     if (_circuitBreaker.isOpen && _currentRoomId != null) {
-      _logger.i('Network restored - resetting Circuit Breaker and reconnecting...', module: 'WsSignaling');
+      _logger.i(
+        'Network restored - resetting Circuit Breaker and reconnecting...',
+        module: 'WsSignaling',
+      );
       _circuitBreaker.reset();
       connect(_currentRoomId!);
     }
@@ -265,6 +273,7 @@ final class WsSignalingClient implements SignalingClient {
   @override
   Future<void> disconnect() async {
     _isExplicitlyClosed = true;
+    _peerId = null;
     _stopReconnectTimer();
     _circuitBreaker.dispose();
     await _cleanupConnection();

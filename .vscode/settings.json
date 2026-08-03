@@ -1,6 +1,7 @@
 {
   "files.exclude": {
     "**/.idea": true,
+    "**/__debug_bin.exe": true,
     "**/.dart_tool": true,
     "**/build": true,
     "**/.flutter-plugins-dependencies": true,
@@ -33,6 +34,7 @@
 
   "search.exclude": {
     "**/.idea": true,
+    "**/__debug_bin.exe": true,
     "**/.dart_tool": true,
     "**/build": true,
     "**/.flutter-plugins-dependencies": true,

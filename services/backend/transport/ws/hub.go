@@ -16,6 +16,7 @@ type Client struct {
 	RoomID string
 	Conn   *websocket.Conn
 	Send   chan []byte
+	Hub    *Hub
 }
 
 type MessageEnvelope struct {
@@ -52,8 +53,8 @@ func (h *Hub) Run() {
 				h.rooms[client.RoomID] = make(map[*Client]bool)
 			}
 
+			// Informowanie istniejących i nowego użytkownika
 			for existingClient := range h.rooms[client.RoomID] {
-				// Powiadomienie istniejącego klienta o nowym uczestniku
 				notifyJoined, _ := json.Marshal(domain.WSMessage{
 					Type:   "peer_joined",
 					Sender: "server",
@@ -61,9 +62,11 @@ func (h *Hub) Run() {
 						"peer_id": client.ID,
 					},
 				})
-				existingClient.Conn.WriteMessage(websocket.TextMessage, notifyJoined)
+				select {
+				case existingClient.Send <- notifyJoined:
+				default:
+				}
 
-				// Powiadomienie nowego klienta o obecnych uczestnikach
 				notifyExisting, _ := json.Marshal(domain.WSMessage{
 					Type:   "peer_joined",
 					Sender: "server",
@@ -71,7 +74,10 @@ func (h *Hub) Run() {
 						"peer_id": existingClient.ID,
 					},
 				})
-				client.Conn.WriteMessage(websocket.TextMessage, notifyExisting)
+				select {
+				case client.Send <- notifyExisting:
+				default:
+				}
 			}
 
 			h.rooms[client.RoomID][client] = true
@@ -87,18 +93,21 @@ func (h *Hub) Run() {
 			if clients, ok := h.rooms[client.RoomID]; ok {
 				if _, ok := clients[client]; ok {
 					delete(clients, client)
-					client.Conn.Close()
+					close(client.Send)
 
-					// Powiadomienie pozostałych członków pokoju o wyjściu klienta
+					notifyLeft, _ := json.Marshal(domain.WSMessage{
+						Type:   "peer_left",
+						Sender: "server",
+						Payload: map[string]string{
+							"peer_id": client.ID,
+						},
+					})
+
 					for remainingClient := range clients {
-						notifyLeft, _ := json.Marshal(domain.WSMessage{
-							Type:   "peer_left",
-							Sender: "server",
-							Payload: map[string]string{
-								"peer_id": client.ID,
-							},
-						})
-						remainingClient.Conn.WriteMessage(websocket.TextMessage, notifyLeft)
+						select {
+						case remainingClient.Send <- notifyLeft:
+						default:
+						}
 					}
 				}
 				if len(clients) == 0 {
@@ -117,12 +126,11 @@ func (h *Hub) Run() {
 			if clients, ok := h.rooms[env.RoomID]; ok {
 				for client := range clients {
 					if client != env.Sender {
-						err := client.Conn.WriteMessage(websocket.TextMessage, env.Data)
-						if err != nil {
-							h.logger.Error("Failed to send message to client",
-								zap.String("client_id", client.ID),
-								zap.Error(err),
-							)
+						select {
+						case client.Send <- env.Data:
+						default:
+							// Bufor pełny - klient rozłączony/zatkany
+							h.logger.Warn("Client buffer full, dropping message", zap.String("client_id", client.ID))
 						}
 					}
 				}

@@ -4,6 +4,11 @@ enum SignalingState { disconnected, connecting, connected, error }
 
 abstract class SignalingEvent {}
 
+class RoomJoinedEvent extends SignalingEvent {
+  final String myPeerId;
+  RoomJoinedEvent(this.myPeerId);
+}
+
 class PeerJoinedEvent extends SignalingEvent {
   final String peerId;
   PeerJoinedEvent(this.peerId);
@@ -41,6 +46,7 @@ class IceCandidateReceivedEvent extends SignalingEvent {
 }
 
 abstract class SignalingClient {
+  String? get peerId;
   Stream<SignalingState> get stateStream;
   Stream<SignalingEvent> get eventStream;
 
@@ -49,5 +55,10 @@ abstract class SignalingClient {
 
   void sendOffer(String targetId, String sdp);
   void sendAnswer(String targetId, String sdp);
-  void sendIceCandidate(String targetId, String candidate, String sdpMid, int sdpMLineIndex);
+  void sendIceCandidate(
+    String targetId,
+    String candidate,
+    String sdpMid,
+    int sdpMLineIndex,
+  );
 }

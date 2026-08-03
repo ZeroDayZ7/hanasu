@@ -23,7 +23,6 @@ final class WebRtcService {
   Timer? _statsTimer;
   String? _targetPeerId;
 
-  // Izolowana, reaktywna kolejka dla kandydatów ICE
   IceCandidateQueue? _iceQueue;
 
   WebRtcService(this._logger, this._signalingClient);
@@ -33,30 +32,85 @@ final class WebRtcService {
   Future<void> initialize() async {
     _logger.i('Initializing WebRtcService...', module: 'WebRTC');
 
-    // 1. Inicjalizacja profesjonalnej sesji Audio VoIP przed przechwyceniem mikrofonu
     await _configureAudioSession();
+    await _initLocalAudioStream();
+    _subscribeToSignalingEvents();
+  }
 
-    // 2. Subskrypcja zdarzeń sygnalizacyjnych
+  Future<void> _initLocalAudioStream() async {
+    if (_localStream != null) return;
+
+    try {
+      _localStream = await navigator.mediaDevices.getUserMedia(
+        WebRtcConfig.audioConstraints,
+      );
+      for (final track in _localStream!.getAudioTracks()) {
+        track.enabled = true;
+      }
+    } catch (e, st) {
+      _logger.e(
+        'Failed to acquire local audio stream',
+        module: 'WebRTC',
+        error: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  void _subscribeToSignalingEvents() {
+    _eventSubscription?.cancel();
     _eventSubscription = _signalingClient.eventStream.listen((event) async {
       try {
+        final myPeerId = _signalingClient.peerId;
+
         switch (event) {
           case PeerJoinedEvent(:final peerId):
+            if (peerId == myPeerId) return;
+
             _targetPeerId = peerId;
-            if (_peerConnection == null) {
-              await _createPeerConnection();
+            await _resetPeerConnection(keepLocalStream: true);
+            await _createPeerConnection();
+
+            final currentMyId = _signalingClient.peerId;
+            final isPolite = currentMyId != null && currentMyId.isNotEmpty
+                ? currentMyId.compareTo(peerId) < 0
+                : false;
+
+            if (!isPolite) {
               await _triggerOffer();
+            } else {
+              _logger.i(
+                'Polite peer detected. Waiting for remote offer from $peerId',
+                module: 'WebRTC',
+              );
             }
             break;
 
-          case PeerLeftEvent():
-            await closeConnection();
+          case PeerLeftEvent(:final peerId):
+            if (_targetPeerId == peerId) {
+              await closeConnection();
+            }
             break;
 
           case OfferReceivedEvent(:final senderId, :final sdp):
+            if (senderId == myPeerId) return;
+
             _targetPeerId = senderId;
-            if (_peerConnection == null) await _createPeerConnection();
+
+            final state = await _peerConnection?.getSignalingState();
+            if (_peerConnection == null ||
+                state == RTCSignalingState.RTCSignalingStateClosed) {
+              await _resetPeerConnection(keepLocalStream: true);
+              await _createPeerConnection();
+            }
+
+            final currentMyId = (myPeerId != null && myPeerId.isNotEmpty)
+                ? myPeerId
+                : 'local_peer';
+
             await handleOfferAndSendAnswer(
               peerConnection: _peerConnection!,
+              myPeerId: currentMyId,
               targetPeerId: _targetPeerId!,
               offerSdp: sdp,
               signalingClient: _signalingClient,
@@ -65,8 +119,9 @@ final class WebRtcService {
             );
             break;
 
-          case AnswerReceivedEvent(:final sdp):
-            if (_peerConnection == null) return;
+          case AnswerReceivedEvent(:final senderId, :final sdp):
+            if (senderId == myPeerId || _peerConnection == null) return;
+
             await handleSdpAnswer(
               peerConnection: _peerConnection!,
               answerSdp: sdp,
@@ -76,10 +131,13 @@ final class WebRtcService {
             break;
 
           case IceCandidateReceivedEvent(
+            :final senderId,
             :final candidate,
             :final sdpMid,
             :final sdpMLineIndex,
           ):
+            if (senderId == myPeerId) return;
+
             _iceQueue?.addCandidate(
               RTCIceCandidate(candidate, sdpMid, sdpMLineIndex),
             );
@@ -90,7 +148,7 @@ final class WebRtcService {
         }
       } catch (e, st) {
         _logger.e(
-          'Error processing event',
+          'Error processing signaling event',
           module: 'WebRTC',
           error: e,
           stackTrace: st,
@@ -109,7 +167,6 @@ final class WebRtcService {
   }
 
   Future<void> setSpeakerphoneOn(bool enable) async {
-    // Przełączanie głośnika ma sens tylko na urządzeniach mobilnych
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
       _logger.i(
         'Speakerphone toggle ignored on non-mobile platform',
@@ -131,13 +188,38 @@ final class WebRtcService {
     }
   }
 
+  Future<void> _resetPeerConnection({bool keepLocalStream = false}) async {
+    _statsTimer?.cancel();
+    _statsTimer = null;
+
+    await _iceQueue?.dispose();
+    _iceQueue = null;
+
+    if (!keepLocalStream && _localStream != null) {
+      for (final track in _localStream!.getTracks()) {
+        await track.stop();
+      }
+      await _localStream!.dispose();
+      _localStream = null;
+    }
+
+    if (_peerConnection != null) {
+      await _peerConnection!.close();
+      await _peerConnection!.dispose();
+      _peerConnection = null;
+    }
+
+    _remoteStream = null;
+  }
+
   Future<void> _createPeerConnection() async {
     if (_peerConnection != null) return;
+
+    await _configureAudioSession();
 
     final pc = await createPeerConnection(WebRtcConfig.rtcConfiguration);
     _peerConnection = pc;
 
-    await _iceQueue?.dispose();
     _iceQueue = IceCandidateQueue(_logger);
 
     _setupPeerConnectionListeners(pc);
@@ -163,22 +245,18 @@ final class WebRtcService {
 
   Future<void> _attachLocalAudioStream(RTCPeerConnection pc) async {
     try {
-      _localStream = await navigator.mediaDevices.getUserMedia(
-        WebRtcConfig.audioConstraints,
-      );
-
-      if (_peerConnection != pc) return;
-
-      for (final track in _localStream!.getAudioTracks()) {
-        track.enabled = true;
+      if (_localStream == null) {
+        await _initLocalAudioStream();
       }
+
+      if (_localStream == null || _peerConnection != pc) return;
 
       for (final track in _localStream!.getTracks()) {
         await pc.addTrack(track, _localStream!);
       }
     } catch (e, st) {
       _logger.e(
-        'Microphone access error',
+        'Error attaching local audio stream to PeerConnection',
         module: 'WebRTC',
         error: e,
         stackTrace: st,
@@ -248,31 +326,19 @@ final class WebRtcService {
     };
 
     pc.onTrack = (event) {
-      if (event.streams.isNotEmpty) _remoteStream = event.streams[0];
-      if (event.track.kind == 'audio') event.track.enabled = true;
+      if (event.streams.isNotEmpty) {
+        _remoteStream = event.streams[0];
+      }
+      if (event.track.kind == 'audio') {
+        event.track.enabled = true;
+      }
     };
   }
 
   Future<void> closeConnection() async {
-    _statsTimer?.cancel();
-    _statsTimer = null;
-
-    await _eventSubscription?.cancel();
-    _eventSubscription = null;
-
-    await _iceQueue?.dispose();
-    _iceQueue = null;
-
-    _localStream?.getTracks().forEach((t) => t.stop());
-    await _localStream?.dispose();
-    _localStream = null;
-
-    await _peerConnection?.close();
-    _peerConnection = null;
-    _remoteStream = null;
+    await _resetPeerConnection(keepLocalStream: false);
     _targetPeerId = null;
 
-    // Dezaktywacja sesji Audio i powrót systemu do normalnego trybu odtwarzania dźwięków
     try {
       final session = await AudioSession.instance;
       await session.setActive(false);
@@ -280,5 +346,11 @@ final class WebRtcService {
     } catch (e) {
       _logger.e('Error deactivating Audio Session', module: 'WebRTC', error: e);
     }
+  }
+
+  Future<void> dispose() async {
+    await _eventSubscription?.cancel();
+    _eventSubscription = null;
+    await closeConnection();
   }
 }
