@@ -49,14 +49,24 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   Future<void> connect(String roomId) async {
+    _logger.i(
+      '[ws_signaling_client.dart -> connect -> 1.0 -> Connection request for room: $roomId]',
+      module: 'WsSignaling',
+    );
     _currentRoomId = roomId;
     _isExplicitlyClosed = false;
 
-    if (_isConnecting) return;
+    if (_isConnecting) {
+      _logger.d(
+        '[ws_signaling_client.dart -> connect -> 1.1 -> Already connecting, ignoring request]',
+        module: 'WsSignaling',
+      );
+      return;
+    }
 
     if (!_circuitBreaker.canExecute()) {
       _logger.w(
-        'Circuit Breaker is OPEN. Aborting connection attempt for room: $roomId',
+        '[ws_signaling_client.dart -> connect -> 1.2 -> Circuit Breaker is OPEN. Aborting connection attempt]',
         module: 'WsSignaling',
       );
       _stateController.add(SignalingState.disconnected);
@@ -64,15 +74,20 @@ final class WsSignalingClient implements SignalingClient {
     }
 
     _isConnecting = true;
-
+    _logger.d(
+      '[ws_signaling_client.dart -> connect -> 1.3 -> Cleaning up old connection before connecting]',
+      module: 'WsSignaling',
+    );
     await _cleanupConnection();
 
-    _logger.i('Connecting to WebSocket room: $roomId', module: 'WsSignaling');
     _stateController.add(SignalingState.connecting);
 
     try {
       final urlString = '${EnvConfig.current.wsBaseUrl}?room=$roomId';
-      _logger.i('Full WebSocket URI: $urlString', module: 'WsSignaling');
+      _logger.i(
+        '[ws_signaling_client.dart -> connect -> 1.4 -> WebSocket URI: $urlString]',
+        module: 'WsSignaling',
+      );
 
       final uri = Uri.parse(urlString);
       _channel = WebSocketChannel.connect(uri);
@@ -81,23 +96,28 @@ final class WsSignalingClient implements SignalingClient {
 
       _isConnecting = false;
       _stopReconnectTimer();
-
       _circuitBreaker.onSuccess();
 
       _stateController.add(SignalingState.connected);
-      _logger.i('WebSocket connected successfully', module: 'WsSignaling');
+      _logger.i(
+        '[ws_signaling_client.dart -> connect -> 1.5 -> WebSocket connected successfully]',
+        module: 'WsSignaling',
+      );
 
       _subscription = _channel!.stream.listen(
         (rawMessage) {
           _handleIncomingMessage(rawMessage);
         },
         onDone: () {
-          _logger.w('WebSocket connection closed', module: 'WsSignaling');
+          _logger.w(
+            '[ws_signaling_client.dart -> listen -> onDone -> Connection closed]',
+            module: 'WsSignaling',
+          );
           _handleConnectionLoss();
         },
         onError: (Object error, Object? stackTrace) {
           _logger.e(
-            'WebSocket stream error',
+            '[ws_signaling_client.dart -> listen -> onError -> Stream error]',
             module: 'WsSignaling',
             error: error,
             stackTrace: stackTrace is StackTrace ? stackTrace : null,
@@ -107,7 +127,7 @@ final class WsSignalingClient implements SignalingClient {
       );
     } catch (e, st) {
       _logger.e(
-        'Failed to connect to WebSocket',
+        '[ws_signaling_client.dart -> connect -> ERR -> Exception during WS connection]',
         module: 'WsSignaling',
         error: e,
         stackTrace: st,
@@ -120,26 +140,40 @@ final class WsSignalingClient implements SignalingClient {
   void _handleIncomingMessage(dynamic raw) {
     if (raw is! String) return;
 
-    _logger.t('Received raw message: $raw', module: 'WsSignaling');
+    _logger.t(
+      '[ws_signaling_client.dart -> _handleIncomingMessage -> 1.0 -> Raw payload: $raw]',
+      module: 'WsSignaling',
+    );
     final events = parseSignalingMessages(raw);
 
     for (final event in events) {
       if (event is RoomJoinedEvent) {
         _peerId = event.myPeerId;
+        _logger.i(
+          '[ws_signaling_client.dart -> _handleIncomingMessage -> 1.1 -> Assigned peerId: $_peerId]',
+          module: 'WsSignaling',
+        );
       }
-      _logger.d('Parsed event: ${event.runtimeType}', module: 'WsSignaling');
+      _logger.d(
+        '[ws_signaling_client.dart -> _handleIncomingMessage -> 1.2 -> Parsed event: ${event.runtimeType}]',
+        module: 'WsSignaling',
+      );
       _eventController.add(event);
     }
 
     if (events.isEmpty) {
       _logger.w(
-        'Unknown or unparseable payload received: $raw',
+        '[ws_signaling_client.dart -> _handleIncomingMessage -> 1.3 -> Unknown or unparseable payload: $raw]',
         module: 'WsSignaling',
       );
     }
   }
 
   void _handleConnectionLoss() {
+    _logger.w(
+      '[ws_signaling_client.dart -> _handleConnectionLoss -> 1.0 -> Handling connection loss | Resetting peerId]',
+      module: 'WsSignaling',
+    );
     _peerId = null;
     _circuitBreaker.onFailure();
     _stateController.add(SignalingState.disconnected);
@@ -154,7 +188,7 @@ final class WsSignalingClient implements SignalingClient {
 
     if (_circuitBreaker.isOpen) {
       _logger.w(
-        'Circuit Breaker triggered OPEN state. Stopping auto-reconnect attempts for now.',
+        '[ws_signaling_client.dart -> _startReconnectTimer -> 1.0 -> Circuit Breaker OPEN. Skipping reconnect]',
         module: 'WsSignaling',
       );
       return;
@@ -162,7 +196,7 @@ final class WsSignalingClient implements SignalingClient {
 
     final delay = _calculateBackoffDelay();
     _logger.i(
-      'Scheduling reconnect attempt #${_reconnectAttempts + 1} in ${delay.inMilliseconds}ms',
+      '[ws_signaling_client.dart -> _startReconnectTimer -> 1.1 -> Scheduling reconnect attempt #${_reconnectAttempts + 1} in ${delay.inMilliseconds}ms]',
       module: 'WsSignaling',
     );
 
@@ -170,7 +204,7 @@ final class WsSignalingClient implements SignalingClient {
       if (_currentRoomId != null && !_isExplicitlyClosed && !_isConnecting) {
         _reconnectAttempts++;
         _logger.i(
-          'Attempting auto-reconnect (attempt #$_reconnectAttempts)...',
+          '[ws_signaling_client.dart -> _startReconnectTimer -> 1.2 -> Executing auto-reconnect attempt #$_reconnectAttempts]',
           module: 'WsSignaling',
         );
         connect(_currentRoomId!);
@@ -199,6 +233,10 @@ final class WsSignalingClient implements SignalingClient {
   }
 
   Future<void> _cleanupConnection() async {
+    _logger.d(
+      '[ws_signaling_client.dart -> _cleanupConnection -> 1.0 -> Cleaning active stream and channel]',
+      module: 'WsSignaling',
+    );
     await _subscription?.cancel();
     _subscription = null;
 
@@ -211,11 +249,14 @@ final class WsSignalingClient implements SignalingClient {
   void _send(Map<String, dynamic> data) {
     try {
       final payload = jsonEncode(data);
-      _logger.t('Sending WS payload: $payload', module: 'WsSignaling');
+      _logger.t(
+        '[ws_signaling_client.dart -> _send -> 1.0 -> Sending WS payload: $payload]',
+        module: 'WsSignaling',
+      );
       _channel?.sink.add(payload);
     } catch (e, st) {
       _logger.e(
-        'Failed to send WebSocket message',
+        '[ws_signaling_client.dart -> _send -> ERR -> Failed to send WebSocket message]',
         module: 'WsSignaling',
         error: e,
         stackTrace: st,
@@ -225,6 +266,10 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   void sendOffer(String targetId, String sdp) {
+    _logger.d(
+      '[ws_signaling_client.dart -> sendOffer -> 1.0 -> Sending SDP offer to target: $targetId]',
+      module: 'WsSignaling',
+    );
     _send({
       'type': 'offer',
       'target_id': targetId,
@@ -234,6 +279,10 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   void sendAnswer(String targetId, String sdp) {
+    _logger.d(
+      '[ws_signaling_client.dart -> sendAnswer -> 1.0 -> Sending SDP answer to target: $targetId]',
+      module: 'WsSignaling',
+    );
     _send({
       'type': 'answer',
       'target_id': targetId,
@@ -248,6 +297,10 @@ final class WsSignalingClient implements SignalingClient {
     String sdpMid,
     int sdpMLineIndex,
   ) {
+    _logger.d(
+      '[ws_signaling_client.dart -> sendIceCandidate -> 1.0 -> Sending ICE candidate to target: $targetId]',
+      module: 'WsSignaling',
+    );
     _send({
       'type': 'candidate',
       'target_id': targetId,
@@ -262,7 +315,7 @@ final class WsSignalingClient implements SignalingClient {
   void onNetworkRestored() {
     if (_circuitBreaker.isOpen && _currentRoomId != null) {
       _logger.i(
-        'Network restored - resetting Circuit Breaker and reconnecting...',
+        '[ws_signaling_client.dart -> onNetworkRestored -> 1.0 -> Network restored - resetting Circuit Breaker and reconnecting]',
         module: 'WsSignaling',
       );
       _circuitBreaker.reset();
@@ -272,6 +325,10 @@ final class WsSignalingClient implements SignalingClient {
 
   @override
   Future<void> disconnect() async {
+    _logger.i(
+      '[ws_signaling_client.dart -> disconnect -> 1.0 -> Explicit disconnect called]',
+      module: 'WsSignaling',
+    );
     _isExplicitlyClosed = true;
     _peerId = null;
     _stopReconnectTimer();

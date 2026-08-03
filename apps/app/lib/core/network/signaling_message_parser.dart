@@ -2,12 +2,8 @@ import 'dart:convert';
 
 import 'package:app/core/network/signaling_client.dart';
 
-/// Parsuje pojedynczy ciąg znaków (może zawierać wiele obiektów połączonych `\n`)
-/// i zwraca listę rozpoznanych zdarzeń [SignalingEvent].
 List<SignalingEvent> parseSignalingMessages(String raw) {
   final events = <SignalingEvent>[];
-
-  // Obsługa wielu ramek JSON przesłanych w jednym strumieniu (rozdzielonych \n)
   final lines = raw.split('\n');
 
   for (final line in lines) {
@@ -20,15 +16,12 @@ List<SignalingEvent> parseSignalingMessages(String raw) {
       if (event != null) {
         events.add(event);
       }
-    } catch (_) {
-      // Ignorujemy niepoprawne lub uszkodzone pakiety JSON
-    }
+    } catch (_) {}
   }
 
   return events;
 }
 
-/// Główny parser dla pojedynczej mapy JSON.
 SignalingEvent? parseSignalingMessage(String raw) {
   final events = parseSignalingMessages(raw);
   return events.isNotEmpty ? events.first : null;
@@ -58,8 +51,6 @@ SignalingEvent? _parseSingleMessage(Map<String, dynamic> map) {
     _ => null,
   };
 }
-
-// Private helpers do czyszczenia wyciągania zagnieżdżonych pól payloadu
 
 String _extractPeerId(Map<String, dynamic> map) {
   final payload = map['payload'] as Map<String, dynamic>?;
