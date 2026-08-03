@@ -16,6 +16,7 @@
     "**/android": true,
     "**/test": true,
     "**/.gitattributes": true,
+    // "**/.gitignore": true,
     "**/pubspec.lock": true,
     "**/LICENSE": true,
     "**/devtools_options.yaml": true,
@@ -26,7 +27,6 @@
     "**/app_localizations_pl.dart": true,
     "**/app_localizations.dart": true,
 
-    "**/.gitignore": true,
     "**/l10n.yaml": true
     // "**/README.md": true
   },

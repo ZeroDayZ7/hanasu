@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:app/config/env_config.dart';
 import 'package:app/core/logger/app_logger.dart';
+import 'package:app/core/network/circuit_breaker.dart';
 import 'package:app/core/network/signaling_client.dart';
 import 'package:app/core/network/signaling_message_parser.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -16,6 +17,8 @@ final class WsSignalingClient implements SignalingClient {
   final _stateController = StreamController<SignalingState>.broadcast();
   final _eventController = StreamController<SignalingEvent>.broadcast();
 
+  final CircuitBreaker _circuitBreaker;
+
   String? _currentRoomId;
   Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
@@ -27,7 +30,14 @@ final class WsSignalingClient implements SignalingClient {
   static const Duration _maxDelay = Duration(seconds: 30);
   static const double _backoffFactor = 1.5;
 
-  WsSignalingClient(this._logger);
+  WsSignalingClient(
+    this._logger, {
+    CircuitBreaker? circuitBreaker,
+  }) : _circuitBreaker = circuitBreaker ??
+            CircuitBreaker(
+              maxFailures: 5,
+              resetTimeout: const Duration(minutes: 5),
+            );
 
   @override
   Stream<SignalingState> get stateStream => _stateController.stream;
@@ -41,6 +51,16 @@ final class WsSignalingClient implements SignalingClient {
     _isExplicitlyClosed = false;
 
     if (_isConnecting) return;
+
+    if (!_circuitBreaker.canExecute()) {
+      _logger.w(
+        'Circuit Breaker is OPEN. Aborting connection attempt for room: $roomId',
+        module: 'WsSignaling',
+      );
+      _stateController.add(SignalingState.disconnected);
+      return;
+    }
+
     _isConnecting = true;
 
     await _cleanupConnection();
@@ -59,6 +79,9 @@ final class WsSignalingClient implements SignalingClient {
 
       _isConnecting = false;
       _stopReconnectTimer();
+
+      // Sukces połączenia – resetujemy licznik barierowy i próby reconnecta
+      _circuitBreaker.onSuccess();
 
       _stateController.add(SignalingState.connected);
       _logger.i('WebSocket connected successfully', module: 'WsSignaling');
@@ -111,6 +134,7 @@ final class WsSignalingClient implements SignalingClient {
   }
 
   void _handleConnectionLoss() {
+    _circuitBreaker.onFailure();
     _stateController.add(SignalingState.disconnected);
 
     if (!_isExplicitlyClosed) {
@@ -120,6 +144,14 @@ final class WsSignalingClient implements SignalingClient {
 
   void _startReconnectTimer() {
     if (_reconnectTimer?.isActive ?? false) return;
+
+    if (_circuitBreaker.isOpen) {
+      _logger.w(
+        'Circuit Breaker triggered OPEN state. Stopping auto-reconnect attempts for now.',
+        module: 'WsSignaling',
+      );
+      return;
+    }
 
     final delay = _calculateBackoffDelay();
     _logger.i(
@@ -221,10 +253,20 @@ final class WsSignalingClient implements SignalingClient {
     });
   }
 
+  /// Wywoływane z zewnątrz (np. przez listener Connectivity), gdy powróci połączenie z siecią.
+  void onNetworkRestored() {
+    if (_circuitBreaker.isOpen && _currentRoomId != null) {
+      _logger.i('Network restored - resetting Circuit Breaker and reconnecting...', module: 'WsSignaling');
+      _circuitBreaker.reset();
+      connect(_currentRoomId!);
+    }
+  }
+
   @override
   Future<void> disconnect() async {
     _isExplicitlyClosed = true;
     _stopReconnectTimer();
+    _circuitBreaker.dispose();
     await _cleanupConnection();
     _currentRoomId = null;
     _stateController.add(SignalingState.disconnected);

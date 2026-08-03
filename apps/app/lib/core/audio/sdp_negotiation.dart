@@ -1,3 +1,4 @@
+import 'package:app/core/audio/sdp_validator.dart';
 import 'package:app/core/logger/app_logger.dart';
 import 'package:app/core/network/signaling_client.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -26,9 +27,18 @@ Future<void> createAndSendSdpOffer({
       return;
     }
 
+    final sdp = description.sdp;
+    if (!SdpValidator.isValidSdp(sdp, expectedType: 'offer')) {
+      logger.e(
+        'Generated local SDP offer is invalid. Aborting send.',
+        module: 'WebRTC',
+      );
+      return;
+    }
+
     await peerConnection.setLocalDescription(description);
     logger.d('Sending SDP Offer to -> $targetPeerId', module: 'WebRTC');
-    signalingClient.sendOffer(targetPeerId, description.sdp!);
+    signalingClient.sendOffer(targetPeerId, sdp!);
   } catch (e, st) {
     logger.e(
       'Failed to create/send offer',
@@ -48,16 +58,34 @@ Future<void> handleOfferAndSendAnswer({
   required AppLogger logger,
   required Future<void> Function() onRemoteDescriptionSet,
 }) async {
+  if (!SdpValidator.isValidSdp(offerSdp, expectedType: 'offer')) {
+    logger.w(
+      'Rejected incoming SDP offer from $targetPeerId due to failed Zero-Trust validation.',
+      module: 'WebRTC',
+    );
+    return;
+  }
+
   try {
     final remoteDesc = RTCSessionDescription(offerSdp, 'offer');
     await peerConnection.setRemoteDescription(remoteDesc);
     await onRemoteDescriptionSet();
 
     final answer = await peerConnection.createAnswer();
+    final answerSdp = answer.sdp;
+
+    if (!SdpValidator.isValidSdp(answerSdp, expectedType: 'answer')) {
+      logger.e(
+        'Generated local SDP answer is invalid. Aborting send.',
+        module: 'WebRTC',
+      );
+      return;
+    }
+
     await peerConnection.setLocalDescription(answer);
 
     logger.d('Sending SDP Answer to -> $targetPeerId', module: 'WebRTC');
-    signalingClient.sendAnswer(targetPeerId, answer.sdp!);
+    signalingClient.sendAnswer(targetPeerId, answerSdp!);
   } catch (e, st) {
     logger.e(
       'Failed to handle offer and send answer',
@@ -75,6 +103,14 @@ Future<void> handleSdpAnswer({
   required AppLogger logger,
   required Future<void> Function() onRemoteDescriptionSet,
 }) async {
+  if (!SdpValidator.isValidSdp(answerSdp, expectedType: 'answer')) {
+    logger.w(
+      'Rejected incoming SDP answer due to failed Zero-Trust validation.',
+      module: 'WebRTC',
+    );
+    return;
+  }
+
   try {
     final remoteDesc = RTCSessionDescription(answerSdp, 'answer');
     await peerConnection.setRemoteDescription(remoteDesc);
