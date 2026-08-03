@@ -3,7 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'secure_storage_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 FlutterSecureStorage secureStorage(Ref ref) {
   const androidOptions = AndroidOptions(resetOnError: true);
   const iosOptions = IOSOptions(

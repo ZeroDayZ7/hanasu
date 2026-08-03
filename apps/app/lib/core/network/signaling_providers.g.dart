@@ -49,4 +49,4 @@ final class SignalingClientProvider
   }
 }
 
-String _$signalingClientHash() => r'12a8f305545067e82ad4a9e116aaed317ff50117';
+String _$signalingClientHash() => r'02e96254a121c5c8d25e1c007af664cf5abd87d4';

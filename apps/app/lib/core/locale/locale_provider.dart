@@ -6,7 +6,7 @@ part 'locale_provider.g.dart';
 
 const _localeKey = 'selected_locale';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AppLocale extends _$AppLocale {
   @override
   Future<Locale> build() async {

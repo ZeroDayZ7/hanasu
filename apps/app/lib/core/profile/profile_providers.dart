@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'profile_providers.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class UserProfileNotifier extends _$UserProfileNotifier {
   @override
   Future<UserProfile?> build() async {

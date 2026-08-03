@@ -34,7 +34,7 @@ class SessionRoute extends GoRouteData with $SessionRoute {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
   final logger = ref.watch(appLoggerProvider);
 

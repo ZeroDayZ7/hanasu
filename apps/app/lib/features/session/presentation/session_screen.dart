@@ -1,7 +1,3 @@
-import 'dart:async';
-
-import 'package:app/core/audio/audio_providers.dart';
-import 'package:app/core/network/signaling_client.dart';
 import 'package:app/features/session/presentation/widgets/chat_message_list.dart';
 import 'package:app/features/session/presentation/widgets/microphone_control.dart';
 import 'package:app/features/session/presentation/widgets/session_status_bar.dart';
@@ -10,131 +6,34 @@ import 'package:app/features/session/providers/session_controller.dart';
 import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:go_router/go_router.dart';
 
-class SessionScreen extends ConsumerStatefulWidget {
+class SessionScreen extends ConsumerWidget {
   final String roomId;
 
   const SessionScreen({super.key, required this.roomId});
 
   @override
-  ConsumerState<SessionScreen> createState() => _SessionScreenState();
-}
-
-class _SessionScreenState extends ConsumerState<SessionScreen> {
-  RTCVideoRenderer? _remoteRenderer;
-  bool _isRendererInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initRenderer();
-  }
-
-  Future<void> _initRenderer() async {
-    final renderer = RTCVideoRenderer();
-    await renderer.initialize();
-    if (!mounted) {
-      await renderer.dispose();
-      return;
-    }
-
-    _remoteRenderer = renderer;
-
-    final webRtcService = await ref.read(webRtcServiceProvider.future);
-    if (!mounted) return;
-
-    setState(() {
-      _remoteRenderer?.srcObject = webRtcService.remoteStream;
-      _isRendererInitialized = true;
-    });
-  }
-
-  Future<void> _cleanupAndLeave() async {
-    // 1. Najpierw odpinamy strumień od renderera natywnego
-    if (_isRendererInitialized && _remoteRenderer != null) {
-      _remoteRenderer!.srcObject = null;
-    }
-
-    // 2. Opuszczamy pokój i zamykamy gniazdo WS oraz WebRTC
-    final controller = ref.read(
-      sessionControllerProvider(widget.roomId).notifier,
-    );
-    await controller.leaveRoom();
-  }
-
-  @override
-  void dispose() {
-    if (_remoteRenderer != null) {
-      _remoteRenderer!.srcObject = null;
-      _remoteRenderer!.dispose().catchError((_) {});
-      _remoteRenderer = null;
-    }
-    super.dispose();
-  }
-
-  String _getStatusText(
-    SignalingState state,
-    String? peerId,
-    AppLocalizations l10n,
-  ) {
-    return switch (state) {
-      SignalingState.disconnected => l10n.statusDisconnected,
-      SignalingState.connecting => l10n.statusConnecting,
-      SignalingState.connected =>
-        peerId != null
-            ? l10n.statusConnectedWithPeer(peerId)
-            : l10n.statusWaitingForPeer,
-      SignalingState.error => l10n.statusError,
-    };
-  }
-
-  Color _getStatusColor(SignalingState state, String? peerId) {
-    return switch (state) {
-      SignalingState.disconnected => Colors.grey,
-      SignalingState.connecting => Colors.orangeAccent,
-      SignalingState.connected =>
-        peerId != null ? Colors.greenAccent : Colors.lightBlueAccent,
-      SignalingState.error => Colors.redAccent,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final sessionProvider = sessionControllerProvider(widget.roomId);
-
-    // Reaktywne podpięcie zdalnego strumienia
-    ref.listen(webRtcServiceProvider, (previous, next) {
-      next.whenData((webRtcService) {
-        if (_isRendererInitialized &&
-            _remoteRenderer != null &&
-            _remoteRenderer!.srcObject != webRtcService.remoteStream) {
-          setState(() {
-            _remoteRenderer!.srcObject = webRtcService.remoteStream;
-          });
-        }
-      });
-    });
-
+    final sessionProvider = sessionControllerProvider(roomId);
     final sessionState = ref.watch(sessionProvider);
     final controller = ref.read(sessionProvider.notifier);
 
     return PopScope(
-      onPopInvokedWithResult: (didPop, result) async {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) {
-          await _cleanupAndLeave();
+          controller.leaveRoom();
         }
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(l10n.roomTitle(widget.roomId)),
+          title: Text(l10n.roomTitle(roomId)),
           actions: [
             IconButton(
               icon: const Icon(Icons.logout, color: Colors.redAccent),
               onPressed: () async {
-                await _cleanupAndLeave();
+                await controller.leaveRoom();
                 if (context.mounted && context.canPop()) {
                   context.pop();
                 }
@@ -144,18 +43,14 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         ),
         body: Stack(
           children: [
-            if (_isRendererInitialized && _remoteRenderer != null)
-              WindowsAudioRenderer(remoteRenderer: _remoteRenderer!),
+            WindowsAudioRenderer(roomId: roomId),
             Column(
               children: [
                 SessionStatusBar(
                   currentState: sessionState.currentState,
                   peerId: sessionState.peerId,
-                  getStatusText: (state, peerId) =>
-                      _getStatusText(state, peerId, l10n),
-                  getStatusColor: _getStatusColor,
                 ),
-                Expanded(child: ChatMessageList(roomId: widget.roomId)),
+                Expanded(child: ChatMessageList(roomId: roomId)),
                 MicrophoneControl(
                   isMicEnabled: sessionState.isMicEnabled,
                   isSpeakerphoneEnabled: sessionState.isSpeakerphoneEnabled,

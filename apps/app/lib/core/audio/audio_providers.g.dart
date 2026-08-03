@@ -28,7 +28,7 @@ final class WebRtcServiceProvider
         argument: null,
         retry: null,
         name: r'webRtcServiceProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,4 +48,4 @@ final class WebRtcServiceProvider
   }
 }
 
-String _$webRtcServiceHash() => r'be3e81da2214fcef6615ef69e122e14d96d59d80';
+String _$webRtcServiceHash() => r'c5470aea577b913cad9b2bfef8dc13e7212d6001';

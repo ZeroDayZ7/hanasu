@@ -20,7 +20,7 @@ final class AppLocaleProvider
         argument: null,
         retry: null,
         name: r'appLocaleProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -33,7 +33,7 @@ final class AppLocaleProvider
   AppLocale create() => AppLocale();
 }
 
-String _$appLocaleHash() => r'e093b3b17a06f90e2bfe6f694f6e0091e44da03a';
+String _$appLocaleHash() => r'9b991eae0ac710ccdcb8306c33372dd6d4dd0255';
 
 abstract class _$AppLocale extends $AsyncNotifier<Locale> {
   FutureOr<Locale> build();

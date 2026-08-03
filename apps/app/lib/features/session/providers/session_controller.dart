@@ -8,6 +8,8 @@ import 'package:app/features/session/data/session_storage.dart';
 import 'package:app/features/session/domain/chat_message.dart';
 import 'package:app/features/session/domain/message_status.dart';
 import 'package:app/features/session/domain/message_type.dart';
+import 'package:app/features/session/providers/session_connection_manager.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' hide MessageType;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'session_controller.g.dart';
@@ -64,12 +66,14 @@ class SessionState {
   final bool isSpeakerphoneEnabled;
   final SignalingState currentState;
   final String? peerId;
+  final MediaStream? remoteStream;
 
   const SessionState({
     this.isMicEnabled = true,
     this.isSpeakerphoneEnabled = false,
     this.currentState = SignalingState.disconnected,
     this.peerId,
+    this.remoteStream,
   });
 
   SessionState copyWith({
@@ -77,6 +81,7 @@ class SessionState {
     bool? isSpeakerphoneEnabled,
     SignalingState? currentState,
     String? peerId,
+    MediaStream? remoteStream,
   }) {
     return SessionState(
       isMicEnabled: isMicEnabled ?? this.isMicEnabled,
@@ -84,6 +89,7 @@ class SessionState {
           isSpeakerphoneEnabled ?? this.isSpeakerphoneEnabled,
       currentState: currentState ?? this.currentState,
       peerId: peerId ?? this.peerId,
+      remoteStream: remoteStream ?? this.remoteStream,
     );
   }
 }
@@ -96,15 +102,16 @@ class SessionController extends _$SessionController {
   @override
   SessionState build(String roomId) {
     final storage = ref.read(secureStorageProvider);
-    final signaling = ref.read(signalingClientProvider);
 
     ref.onDispose(() {
       _stateSub?.cancel();
       _eventSub?.cancel();
-
-      unawaited(signaling.disconnect());
       unawaited(clearActiveRoomId(storage));
-      ref.invalidate(webRtcServiceProvider);
+
+      // Oczyszczamy połączenie asynchronicznie po zwolnieniu zasobów
+      ref
+          .read(sessionConnectionManagerProvider.future)
+          .then((manager) => manager.disconnect(), onError: (_) {});
     });
 
     _initSession(roomId);
@@ -119,7 +126,11 @@ class SessionController extends _$SessionController {
     if (!ref.mounted) return;
 
     final signaling = ref.read(signalingClientProvider);
-    await ref.read(webRtcServiceProvider.future);
+
+    // Oczekujemy na gotowość manager-a połączenia
+    final connectionManager = await ref.read(
+      sessionConnectionManagerProvider.future,
+    );
 
     if (!ref.mounted) return;
 
@@ -141,12 +152,12 @@ class SessionController extends _$SessionController {
         state = state.copyWith(peerId: event.peerId);
         messagesNotifier.addSystemMessage('Peer joined: ${event.peerId}');
       } else if (event is PeerLeftEvent) {
-        state = state.copyWith(peerId: null);
+        state = state.copyWith(peerId: null, remoteStream: null);
         messagesNotifier.addSystemMessage('Peer left the room');
       }
     });
 
-    unawaited(signaling.connect(roomId));
+    await connectionManager.connect(roomId);
   }
 
   Future<void> toggleMicrophone() async {
@@ -154,8 +165,6 @@ class SessionController extends _$SessionController {
     state = state.copyWith(isMicEnabled: newMicState);
 
     final rtcService = await ref.read(webRtcServiceProvider.future);
-    if (!ref.mounted) return;
-
     rtcService.setMicrophoneMuted(!newMicState);
   }
 
@@ -164,20 +173,18 @@ class SessionController extends _$SessionController {
     state = state.copyWith(isSpeakerphoneEnabled: newSpeakerState);
 
     final rtcService = await ref.read(webRtcServiceProvider.future);
-    if (!ref.mounted) return;
-
     await rtcService.setSpeakerphoneOn(newSpeakerState);
   }
 
   Future<void> leaveRoom() async {
     final storage = ref.read(secureStorageProvider);
-    final signaling = ref.read(signalingClientProvider);
-
-    await signaling.disconnect();
+    final connectionManager = await ref.read(
+      sessionConnectionManagerProvider.future,
+    );
+    await connectionManager.disconnect();
 
     if (!ref.mounted) return;
 
-    ref.invalidate(webRtcServiceProvider);
     await clearActiveRoomId(storage);
   }
 }
