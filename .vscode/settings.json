@@ -28,6 +28,8 @@
     "**/app_localizations_pl.dart": true,
     "**/app_localizations.dart": true,
 
+    "**/*g.dart": true,
+
     "**/l10n.yaml": true
     // "**/README.md": true
   },
