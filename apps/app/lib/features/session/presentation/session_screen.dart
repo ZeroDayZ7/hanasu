@@ -20,47 +20,39 @@ class SessionScreen extends ConsumerWidget {
     final sessionState = ref.watch(sessionProvider);
     final controller = ref.read(sessionProvider.notifier);
 
-    return PopScope(
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          controller.leaveRoom();
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.roomTitle(roomId)),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout, color: Colors.redAccent),
-              onPressed: () async {
-                await controller.leaveRoom();
-                if (context.mounted && context.canPop()) {
-                  context.pop();
-                }
-              },
-            ),
-          ],
-        ),
-        body: Stack(
-          children: [
-            WindowsAudioRenderer(roomId: roomId),
-            Column(
-              children: [
-                SessionStatusBar(
-                  currentState: sessionState.currentState,
-                  peerId: sessionState.peerId,
-                ),
-                Expanded(child: ChatMessageList(roomId: roomId)),
-                MicrophoneControl(
-                  isMicEnabled: sessionState.isMicEnabled,
-                  isSpeakerphoneEnabled: sessionState.isSpeakerphoneEnabled,
-                  onToggleMic: controller.toggleMicrophone,
-                  onToggleSpeakerphone: controller.toggleSpeakerphone,
-                ),
-              ],
-            ),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.roomTitle(roomId)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.redAccent),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              }
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          WindowsAudioRenderer(roomId: roomId),
+          Column(
+            children: [
+              SessionStatusBar(
+                currentState: sessionState.currentState,
+                peerId: sessionState.peerId,
+              ),
+              Expanded(child: ChatMessageList(roomId: roomId)),
+              MicrophoneControl(
+                isMicEnabled: sessionState.isMicEnabled,
+                isSpeakerphoneEnabled: sessionState.isSpeakerphoneEnabled,
+                onToggleMic: controller.toggleMicrophone,
+                onToggleSpeakerphone: controller.toggleSpeakerphone,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

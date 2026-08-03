@@ -103,15 +103,19 @@ class SessionController extends _$SessionController {
   SessionState build(String roomId) {
     final storage = ref.read(secureStorageProvider);
 
+    final connectionManagerFuture = ref.read(
+      sessionConnectionManagerProvider.future,
+    );
+
     ref.onDispose(() {
       _stateSub?.cancel();
       _eventSub?.cancel();
       unawaited(clearActiveRoomId(storage));
 
-      // Oczyszczamy połączenie asynchronicznie po zwolnieniu zasobów
-      ref
-          .read(sessionConnectionManagerProvider.future)
-          .then((manager) => manager.disconnect(), onError: (_) {});
+      connectionManagerFuture.then(
+        (manager) => manager.disconnect(),
+        onError: (_) {},
+      );
     });
 
     _initSession(roomId);
@@ -127,7 +131,6 @@ class SessionController extends _$SessionController {
 
     final signaling = ref.read(signalingClientProvider);
 
-    // Oczekujemy na gotowość manager-a połączenia
     final connectionManager = await ref.read(
       sessionConnectionManagerProvider.future,
     );
@@ -162,29 +165,21 @@ class SessionController extends _$SessionController {
 
   Future<void> toggleMicrophone() async {
     final newMicState = !state.isMicEnabled;
-    state = state.copyWith(isMicEnabled: newMicState);
 
     final rtcService = await ref.read(webRtcServiceProvider.future);
+    if (!ref.mounted) return;
+
+    state = state.copyWith(isMicEnabled: newMicState);
     rtcService.setMicrophoneMuted(!newMicState);
   }
 
   Future<void> toggleSpeakerphone() async {
     final newSpeakerState = !state.isSpeakerphoneEnabled;
-    state = state.copyWith(isSpeakerphoneEnabled: newSpeakerState);
 
     final rtcService = await ref.read(webRtcServiceProvider.future);
-    await rtcService.setSpeakerphoneOn(newSpeakerState);
-  }
-
-  Future<void> leaveRoom() async {
-    final storage = ref.read(secureStorageProvider);
-    final connectionManager = await ref.read(
-      sessionConnectionManagerProvider.future,
-    );
-    await connectionManager.disconnect();
-
     if (!ref.mounted) return;
 
-    await clearActiveRoomId(storage);
+    state = state.copyWith(isSpeakerphoneEnabled: newSpeakerState);
+    await rtcService.setSpeakerphoneOn(newSpeakerState);
   }
 }
