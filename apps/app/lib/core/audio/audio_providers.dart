@@ -5,7 +5,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'audio_providers.g.dart';
 
-// Ustawiamy keepAlive: true, ponieważ WebRtcService to singleton infrastrukturalny
 @Riverpod(keepAlive: true)
 Future<Raw<WebRtcService>> webRtcService(Ref ref) async {
   final logger = ref.watch(appLoggerProvider);
@@ -13,7 +12,6 @@ Future<Raw<WebRtcService>> webRtcService(Ref ref) async {
 
   final service = WebRtcService(logger, signalingClient);
 
-  // Zwalnianie zasobów tylko przy wyłączeniu całej aplikacji / unieważnieniu jawne
   ref.onDispose(() {
     service.closeConnection();
   });

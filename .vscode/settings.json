@@ -22,16 +22,13 @@
     "**/LICENSE": true,
     "**/devtools_options.yaml": true,
     "**/flutter_launcher_icons.yaml": true,
-
     "**/app_localizations_en.dart": true,
     "**/app_localizations_ja.dart": true,
     "**/app_localizations_pl.dart": true,
     "**/app_localizations.dart": true,
-
-    "**/*g.dart": true,
-
-    "**/l10n.yaml": true
-    // "**/README.md": true
+    "**/*.g.dart": true,
+    "**/l10n.yaml": true,
+    "**/README.md": true
   },
 
   "search.exclude": {
